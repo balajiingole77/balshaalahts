@@ -394,10 +394,11 @@ function splitKey(key) { const i = key.lastIndexOf('_'); return [key.slice(0, i)
 //   sessions/<class>_<date> { classId, date, marks: {studentId: 'present'|'absent'|null}, lesson, override }
 // Each tap merges one student's mark into its session doc, so teachers marking at the
 // same time never overwrite each other.
-// Local mode (file opened outside Claude): this browser's localStorage only.
+// Server mode (deployed with server.js): the same shapes in Postgres through /api.
+// Local mode (file opened with no server): this browser's localStorage only.
 
 let db = null;
-let mode = 'loading';           // 'loading' | 'shared' | 'local' | 'error'
+let mode = 'loading';           // 'loading' | 'shared' | 'server' | 'local' | 'error'
 let readOnly = false;
 let writeQueue = Promise.resolve();
 
@@ -410,7 +411,12 @@ function queueWrite(fn) {
       return true;
     } catch (e) {
       console.error('Save failed', e);
-      if (e && e.code === 'invalid_argument' && mode === 'shared') {
+      if (e && e.status === 409) {
+        showToast('Someone else changed this at the same time. Try again.');
+        refreshServer();
+      } else if (e && e.status === 401) {
+        showToast('Your login expired. Reload the page and enter the password.');
+      } else if (e && e.code === 'invalid_argument' && mode === 'shared') {
         readOnly = true;
         renderStorageBanner();
         showToast('You have view-only access, so changes are not saved');
@@ -541,11 +547,116 @@ async function editSharedList(path, change) {
   await ref.set(out);
 }
 
-// ----- one API for both modes -----
+// ----- server mode -----
+let serverVersions = {};
+let pendingWrites = 0;
+
+async function api(method, url, body) {
+  const res = await fetch(url, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+    credentials: 'same-origin',
+    cache: 'no-store'
+  });
+  if (!res.ok) {
+    let msg = res.statusText;
+    try { msg = (await res.json()).error || msg; } catch (e) { /* not JSON */ }
+    throw Object.assign(new Error(msg), { status: res.status });
+  }
+  return res.json();
+}
+
+function applyServerState(data) {
+  const classesDoc = data.classes || { list: [] };
+  const list = (classesDoc.list || []).map(c => Object.assign({}, c));
+  if ((classesDoc.version || 1) < 2) list.forEach(c => { if (CLASS_NAMES[c.id]) c.name = CLASS_NAMES[c.id]; });
+  state.classes = list;
+  state.students = ((data.students && data.students.list) || []).map(s => Object.assign({}, s));
+  serverVersions = data.versions || {};
+  const attendance = {}, lessons = {}, overrides = {};
+  (data.sessions || []).forEach(row => {
+    const marks = {};
+    Object.entries(row.marks || {}).forEach(([sid, v]) => { if (v === 'present' || v === 'absent') marks[sid] = v; });
+    if (Object.keys(marks).length) attendance[row.id] = marks;
+    if (row.lesson) lessons[row.id] = row.lesson;
+    if (row.override) overrides[row.id] = row.override;
+  });
+  state.attendance = attendance;
+  state.lessons = lessons;
+  state.sessionOverrides = overrides;
+}
+
+async function refreshServer() {
+  if (mode !== 'server' || pendingWrites > 0) return;
+  try {
+    const data = await api('GET', '/api/state');
+    if (pendingWrites > 0) return; // a tap happened while loading; the next refresh picks it up
+    applyServerState(data);
+    afterSharedChange();
+  } catch (e) {
+    console.error('Refresh failed', e);
+  }
+}
+
+async function tryInitServer() {
+  if (location.protocol === 'file:') return false;
+  try {
+    const data = await api('GET', '/api/state');
+    mode = 'server';
+    state = emptyState();
+    applyServerState(data);
+    shared.classesLoaded = true;
+    afterSharedChange();
+    // Pick up other teachers' changes: every 15s while visible, and on return to the tab.
+    setInterval(() => { if (document.visibilityState === 'visible') refreshServer(); }, 15000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshServer(); });
+    return true;
+  } catch (e) {
+    if (e.status === 503) {
+      mode = 'error';
+      state = emptyState();
+      renderStorageBanner();
+      return true;
+    }
+    return false; // no server here: fall back to device-only storage
+  }
+}
+
+async function serverWrite(fn) {
+  pendingWrites++;
+  try { await fn(); }
+  finally { pendingWrites--; }
+  refreshServer();
+}
+
+async function editServerList(name, change) {
+  // Version-checked write: if another teacher saved in between, reload and reapply once.
+  for (let attempt = 0; ; attempt++) {
+    const data = await api('GET', '/api/state');
+    const doc = data[name] || { list: [] };
+    const list = (doc.list || []).map(x => Object.assign({}, x));
+    const out = { list: change(list) };
+    if (name === 'classes') out.version = SCHEMA_VERSION;
+    try {
+      await api('PUT', '/api/docs/' + name, { data: out, ifVersion: (data.versions || {})[name] || 0 });
+      return;
+    } catch (e) {
+      if (e.status !== 409 || attempt >= 1) throw e;
+    }
+  }
+}
+
+function sessionPatch(key, patch) {
+  return serverWrite(() => api('PATCH', '/api/sessions/' + encodeURIComponent(key), patch));
+}
+
+// ----- one API for all modes -----
 const store = {
   setMark(key, sid, status) {
     return queueWrite(async () => {
       if (mode === 'shared') await writeSession(key, { marks: { [sid]: status || null } });
+      else if (mode === 'server') await sessionPatch(key, { marks: { [sid]: status || null } });
       else mutateLocal(s => {
         if (!s.attendance[key]) s.attendance[key] = {};
         if (status) s.attendance[key][sid] = status; else delete s.attendance[key][sid];
@@ -555,30 +666,38 @@ const store = {
   setLesson(key, text) {
     return queueWrite(async () => {
       if (mode === 'shared') await writeSession(key, { lesson: text.trim() ? text : '' });
+      else if (mode === 'server') await sessionPatch(key, { lesson: text.trim() ? text : '' });
       else mutateLocal(s => { if (text.trim()) s.lessons[key] = text; else delete s.lessons[key]; });
     });
   },
   setOverride(key, val) {
     return queueWrite(async () => {
       if (mode === 'shared') await writeSession(key, { override: val });
+      else if (mode === 'server') await sessionPatch(key, { override: val });
       else mutateLocal(s => { if (val) s.sessionOverrides[key] = val; else delete s.sessionOverrides[key]; });
     });
   },
   editClasses(change) {
     return queueWrite(async () => {
       if (mode === 'shared') await editSharedList('school/classes', change);
+      else if (mode === 'server') await serverWrite(() => editServerList('classes', change));
       else mutateLocal(s => { s.classes = change(s.classes); });
     });
   },
   editStudents(change) {
     return queueWrite(async () => {
       if (mode === 'shared') await editSharedList('school/students', change);
+      else if (mode === 'server') await serverWrite(() => editServerList('students', change));
       else mutateLocal(s => { s.students = change(s.students); });
     });
   },
-  deleteSessions(match) {
+  // classId: delete that class's history; null: delete all history.
+  deleteSessions(classId) {
+    const match = k => classId === null || k.startsWith(classId + '_');
     return queueWrite(async () => {
-      if (mode === 'shared') {
+      if (mode === 'server') {
+        await serverWrite(() => api('DELETE', '/api/sessions?' + (classId === null ? 'all=true' : 'classId=' + encodeURIComponent(classId))));
+      } else if (mode === 'shared') {
         const qs = await db.collection('sessions').get();
         for (const doc of qs.docs) if (match(doc.id)) await db.doc('sessions/' + doc.id).delete();
       } else mutateLocal(s => {
@@ -592,6 +711,7 @@ function renderStorageBanner() {
   const el = document.getElementById('storageBanner');
   const set = (cls, text) => { el.className = 'banner ' + cls; el.textContent = text; el.style.display = 'block'; };
   if (mode === 'loading') set('info', 'Connecting to shared data…');
+  else if (mode === 'error' && location.protocol !== 'file:' && !db) set('error', "The server can't reach its database. Nothing can be saved right now. Try again in a minute, and tell the admin if it keeps happening.");
   else if (mode === 'error') set('error', "Couldn't reach the shared data. Saving is off so nothing gets overwritten. Check your connection and reload the page.");
   else if (readOnly) set('warn', 'You have view-only access. Ask the owner to share this page with you as a Contributor to mark attendance.');
   else if (mode === 'local') set('warn', 'Saved on this device only. Other teachers will not see these records, and clearing browser data deletes them. Export a CSV from Reports regularly.');
@@ -824,7 +944,7 @@ function renderClassManageList() {
       if (!yes) return;
       await store.editClasses(list => list.filter(c => c.id !== id));
       await store.editStudents(list => list.filter(s => s.classId !== id));
-      await store.deleteSessions(k => k.startsWith(id + '_'));
+      await store.deleteSessions(id);
       if (mode === 'local') renderAll();
       showToast('Class removed');
     });
@@ -1149,7 +1269,7 @@ document.getElementById('resetBtn').addEventListener('click', async () => {
   if (!yes) return;
   const ok = await store.editStudents(() => []);
   if (!ok) return;
-  await store.deleteSessions(() => true);
+  await store.deleteSessions(null);
   if (mode === 'local') renderAll();
   showToast('All students and history cleared');
 });
@@ -1242,6 +1362,6 @@ document.getElementById('copyCsvBtn').addEventListener('click', async () => {
   renderStorageBanner();
   db = window.claude && window.claude.use ? await window.claude.use('db') : null;
   if (db) initShared();
-  else initLocal();
+  else if (!(await tryInitServer())) initLocal();
 })();
 </script>

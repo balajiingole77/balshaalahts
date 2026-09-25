@@ -1,0 +1,16 @@
+{
+  "name": "sunday-school-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Attendance, lesson notes and parent updates for Balshala Sunday school",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "pg": "^8.23.0"
+  }
+}

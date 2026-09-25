@@ -1,0 +1,480 @@
+{
+ "classes": {
+  "version": 2,
+  "list": [
+   {
+    "id": "c1",
+    "name": "VANARA Pre-K",
+    "teacher": ""
+   },
+   {
+    "id": "c2",
+    "name": "BALA Kindergarten",
+    "teacher": "Mittal Patel, Falguni Patel & Payal Doshi"
+   },
+   {
+    "id": "c3",
+    "name": "LAVA 1st Grade",
+    "teacher": ""
+   },
+   {
+    "id": "c4",
+    "name": "KUSHA 2nd Grade",
+    "teacher": ""
+   },
+   {
+    "id": "c5",
+    "name": "DHRUVA 3rd & 4th Grades",
+    "teacher": ""
+   },
+   {
+    "id": "c6",
+    "name": "GUHA 5th Grade",
+    "teacher": ""
+   },
+   {
+    "id": "c7",
+    "name": "YUVA 6th & 7th Grades",
+    "teacher": ""
+   }
+  ]
+ },
+ "students": {
+  "list": [
+   {
+    "id": "s_c1_nimai_devang_bhavsar",
+    "classId": "c1",
+    "name": "Nimai Devang Bhavsar",
+    "grade": "Pre-K",
+    "parent": ""
+   },
+   {
+    "id": "s_c1_neeya_patel",
+    "classId": "c1",
+    "name": "Neeya Patel",
+    "grade": "Pre-K",
+    "parent": ""
+   },
+   {
+    "id": "s_c1_aryan_gowda",
+    "classId": "c1",
+    "name": "Aryan Gowda",
+    "grade": "Pre-K",
+    "parent": ""
+   },
+   {
+    "id": "s_c1_anvika",
+    "classId": "c1",
+    "name": "Anvika",
+    "grade": "Pre-K",
+    "parent": ""
+   },
+   {
+    "id": "s_c1_yara_acharya",
+    "classId": "c1",
+    "name": "Yara Acharya",
+    "grade": "Pre-K",
+    "parent": ""
+   },
+   {
+    "id": "s_c1_arya_brahmbhatt",
+    "classId": "c1",
+    "name": "Arya Brahmbhatt",
+    "grade": "Pre-K",
+    "parent": ""
+   },
+   {
+    "id": "s_c1_sarth_shah",
+    "classId": "c1",
+    "name": "Sarth Shah",
+    "grade": "Pre-K",
+    "parent": ""
+   },
+   {
+    "id": "s_c1_avika_rayavarapu",
+    "classId": "c1",
+    "name": "Avika Rayavarapu",
+    "grade": "Pre-K",
+    "parent": ""
+   },
+   {
+    "id": "s_c1_nishanth_kasina",
+    "classId": "c1",
+    "name": "Nishanth Kasina",
+    "grade": "Pre-K",
+    "parent": ""
+   },
+   {
+    "id": "s_c2_aaryan_brahmbhatt",
+    "classId": "c2",
+    "name": "Aaryan Brahmbhatt",
+    "grade": "K",
+    "parent": ""
+   },
+   {
+    "id": "s_c2_kiara_kumbhani",
+    "classId": "c2",
+    "name": "Kiara Kumbhani",
+    "grade": "K",
+    "parent": ""
+   },
+   {
+    "id": "s_c2_anaya_patel",
+    "classId": "c2",
+    "name": "Anaya Patel",
+    "grade": "K",
+    "parent": ""
+   },
+   {
+    "id": "s_c2_inaya_patel",
+    "classId": "c2",
+    "name": "Inaya Patel",
+    "grade": "K",
+    "parent": ""
+   },
+   {
+    "id": "s_c2_aadhya_shah",
+    "classId": "c2",
+    "name": "Aadhya Shah",
+    "grade": "K",
+    "parent": ""
+   },
+   {
+    "id": "s_c2_siaan_padala",
+    "classId": "c2",
+    "name": "Siaan Padala",
+    "grade": "K",
+    "parent": ""
+   },
+   {
+    "id": "s_c2_avani_broughton",
+    "classId": "c2",
+    "name": "Avani Broughton",
+    "grade": "K",
+    "parent": ""
+   },
+   {
+    "id": "s_c3_prisha_gowda",
+    "classId": "c3",
+    "name": "Prisha Gowda",
+    "grade": "1st",
+    "parent": ""
+   },
+   {
+    "id": "s_c3_arav_patel",
+    "classId": "c3",
+    "name": "Arav Patel",
+    "grade": "1st",
+    "parent": ""
+   },
+   {
+    "id": "s_c3_raahi_chowdhary",
+    "classId": "c3",
+    "name": "Raahi Chowdhary",
+    "grade": "1st",
+    "parent": ""
+   },
+   {
+    "id": "s_c3_anika_das",
+    "classId": "c3",
+    "name": "Anika Das",
+    "grade": "1st",
+    "parent": ""
+   },
+   {
+    "id": "s_c3_tasmai_shivram",
+    "classId": "c3",
+    "name": "Tasmai Shivram",
+    "grade": "1st",
+    "parent": ""
+   },
+   {
+    "id": "s_c4_abhinav_shukla",
+    "classId": "c4",
+    "name": "Abhinav Shukla",
+    "grade": "2nd",
+    "parent": ""
+   },
+   {
+    "id": "s_c4_vedansh_saginala",
+    "classId": "c4",
+    "name": "Vedansh Saginala",
+    "grade": "2nd",
+    "parent": ""
+   },
+   {
+    "id": "s_c4_trisha_patel",
+    "classId": "c4",
+    "name": "Trisha Patel",
+    "grade": "2nd",
+    "parent": ""
+   },
+   {
+    "id": "s_c4_krisha_gandhi",
+    "classId": "c4",
+    "name": "Krisha Gandhi",
+    "grade": "2nd",
+    "parent": ""
+   },
+   {
+    "id": "s_c4_gauthamkrishna_gurumoorthy",
+    "classId": "c4",
+    "name": "Gauthamkrishna Gurumoorthy",
+    "grade": "2nd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_dhrihaan_bhavsar",
+    "classId": "c5",
+    "name": "Dhrihaan Bhavsar",
+    "grade": "4th",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_saaya_patel",
+    "classId": "c5",
+    "name": "Saaya Patel",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_aarav_makhija",
+    "classId": "c5",
+    "name": "Aarav Makhija",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_kashvi_gotam",
+    "classId": "c5",
+    "name": "Kashvi Gotam",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_sanvi_patel",
+    "classId": "c5",
+    "name": "Sanvi Patel",
+    "grade": "4th",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_sahana_acharya",
+    "classId": "c5",
+    "name": "Sahana Acharya",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_advik_d_bhat",
+    "classId": "c5",
+    "name": "Advik D Bhat",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_atharva_mishra",
+    "classId": "c5",
+    "name": "Atharva Mishra",
+    "grade": "4th",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_ananya_shukla",
+    "classId": "c5",
+    "name": "Ananya Shukla",
+    "grade": "4th",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_shyna_patel",
+    "classId": "c5",
+    "name": "Shyna Patel",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_samyaka_ingole",
+    "classId": "c5",
+    "name": "Samyaka Ingole",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_aliyah_patel",
+    "classId": "c5",
+    "name": "Aliyah Patel",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_swara_patel",
+    "classId": "c5",
+    "name": "Swara Patel",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_antra_patel",
+    "classId": "c5",
+    "name": "Antra Patel",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_om_patel",
+    "classId": "c5",
+    "name": "Om Patel",
+    "grade": "4th",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_shanaya_gandhi",
+    "classId": "c5",
+    "name": "Shanaya Gandhi",
+    "grade": "4th",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_aarya_patel",
+    "classId": "c5",
+    "name": "Aarya Patel",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_anika_sarin",
+    "classId": "c5",
+    "name": "Anika Sarin",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_arna_reddy",
+    "classId": "c5",
+    "name": "Arna Reddy",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c5_akash_broughton",
+    "classId": "c5",
+    "name": "Akash Broughton",
+    "grade": "3rd",
+    "parent": ""
+   },
+   {
+    "id": "s_c6_pranav_karanth",
+    "classId": "c6",
+    "name": "Pranav Karanth",
+    "grade": "5th",
+    "parent": ""
+   },
+   {
+    "id": "s_c6_avni_makhija",
+    "classId": "c6",
+    "name": "Avni Makhija",
+    "grade": "5th",
+    "parent": ""
+   },
+   {
+    "id": "s_c6_ayan_patel",
+    "classId": "c6",
+    "name": "Ayan Patel",
+    "grade": "5th",
+    "parent": ""
+   },
+   {
+    "id": "s_c6_aadhya_patel",
+    "classId": "c6",
+    "name": "Aadhya Patel",
+    "grade": "5th",
+    "parent": ""
+   },
+   {
+    "id": "s_c6_pravir_kolar",
+    "classId": "c6",
+    "name": "Pravir Kolar",
+    "grade": "5th",
+    "parent": ""
+   },
+   {
+    "id": "s_c7_myra_patel",
+    "classId": "c7",
+    "name": "Myra Patel",
+    "grade": "6th",
+    "parent": ""
+   },
+   {
+    "id": "s_c7_yara_patel",
+    "classId": "c7",
+    "name": "Yara Patel",
+    "grade": "6th",
+    "parent": ""
+   },
+   {
+    "id": "s_c7_akshat_dubey",
+    "classId": "c7",
+    "name": "Akshat Dubey",
+    "grade": "6th",
+    "parent": ""
+   },
+   {
+    "id": "s_c7_vaishnavi_shukla",
+    "classId": "c7",
+    "name": "Vaishnavi Shukla",
+    "grade": "7th",
+    "parent": ""
+   },
+   {
+    "id": "s_c7_kavya_kumbhani",
+    "classId": "c7",
+    "name": "Kavya Kumbhani",
+    "grade": "7th",
+    "parent": ""
+   },
+   {
+    "id": "s_c7_ava_patel",
+    "classId": "c7",
+    "name": "Ava Patel",
+    "grade": "6th",
+    "parent": ""
+   },
+   {
+    "id": "s_c7_ruhi_patel",
+    "classId": "c7",
+    "name": "Ruhi Patel",
+    "grade": "7th",
+    "parent": ""
+   },
+   {
+    "id": "s_c7_kristeena_kumar",
+    "classId": "c7",
+    "name": "Kristeena Kumar",
+    "grade": "7th",
+    "parent": ""
+   },
+   {
+    "id": "s_c7_aarush_das",
+    "classId": "c7",
+    "name": "Aarush Das",
+    "grade": "7th",
+    "parent": ""
+   },
+   {
+    "id": "s_c7_anvi_reddy",
+    "classId": "c7",
+    "name": "Anvi Reddy",
+    "grade": "7th",
+    "parent": ""
+   },
+   {
+    "id": "s_c7_minchu_shivram",
+    "classId": "c7",
+    "name": "Minchu Shivram",
+    "grade": "7th",
+    "parent": ""
+   }
+  ]
+ }
+}
