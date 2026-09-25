@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sunday School Tracker</title>
+<style>
+  :root {
+    --saffron: #d97706;
+    --saffron-dark: #b45309;
+    --bg: #fdf8f3;
+    --card: #ffffff;
+    --ink: #2a1e14;
+    --muted: #8a7a6a;
+    --border: #eadfcf;
+    --green: #16a34a;
+    --red: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 16px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  select, input[type=text], input[type=date], textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    margin-bottom: 12px;
+    background: #fff;
+    color: var(--ink);
+  }
+  textarea { resize: vertical; min-height: 70px; font-family: inherit; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab {
+    flex: 1;
+    min-width: 80px;
+    padding: 10px 8px;
+    text-align: center;
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .tab.active { background: var(--saffron); color: #fff; border-color: var(--saffron); }
+  .student-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .student-row:last-child { border-bottom: none; }
+  .name { font-size: 15px; font-weight: 500; }
+  .att-btns { display: flex; gap: 6px; }
+  .att-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .att-btn.present.on { background: var(--green); color: #fff; border-color: var(--green); }
+  .att-btn.absent.on { background: var(--red); color: #fff; border-color: var(--red); }
+  button.primary {
+    width: 100%;
+    padding: 12px;
+    background: var(--saffron);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.primary:active { background: var(--saffron-dark); }
+  button.secondary {
+    width: 100%;
+    padding: 10px;
+    background: #fff;
+    color: var(--saffron);
+    border: 1px solid var(--saffron);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .add-row { display: flex; gap: 8px; }
+  .add-row input { flex: 1; margin-bottom: 0; }
+  .add-row button { padding: 10px 14px; background: var(--saffron); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+  .remove-x { color: var(--muted); cursor: pointer; font-size: 13px; padding: 4px 8px; }
+  .msg-box {
+    white-space: pre-wrap;
+    background: #fbf3e7;
+    border: 1px dashed var(--saffron);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 20px 0; }
+  .status { font-size: 12px; color: var(--muted); text-align: center; margin-top: 8px; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 20px;
+    font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<h1>🪔 Sunday School Tracker</h1>
+<div class="sub">Attendance, lesson notes, and parent updates</div>
+
+<div class="card" style="background:#fbf3e7; border-color:var(--saffron);">
+  <div style="font-size:13px; line-height:1.5;">
+    <strong>Pilot proposal</strong><br>
+    Built by a Balshala teacher to try for one class over a few weeks. Replaces paper attendance with a tap-to-mark roster, and generates a ready-to-paste weekly update for the class WhatsApp group. No new accounts or apps for parents, nothing changes for them except getting a clearer weekly note. If it's useful, happy to expand it. If not, no harm done, it's a link, not a system.
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="attendance">Attendance</div>
+  <div class="tab" data-tab="message">Parent Message</div>
+  <div class="tab" data-tab="manage">Manage Classes</div>
+  <div class="tab" data-tab="reports">Reports</div>
+</div>
+
+<div id="attendance-tab">
+  <div class="card">
+    <label>Class</label>
+    <select id="classSelect"></select>
+    <label>Date</label>
+    <select id="dateSelect"></select>
+    <div id="sessionLabel" style="font-size:13px; color:var(--muted); margin-top:8px; margin-bottom:10px;"></div>
+    <label>Class # (override)</label>
+    <input type="text" id="sessionOverride" placeholder="Auto-calculated, edit to override">
+  </div>
+  <div class="card">
+    <label>Students</label>
+    <div id="studentList"></div>
+    <div id="noStudents" class="empty" style="display:none;">No students in this class yet. Add them in "Manage Classes".</div>
+  </div>
+  <div class="card">
+    <label>What was covered today</label>
+    <textarea id="topicInput" placeholder="e.g. Bhagavad Gita Ch.2 intro, discussed karma vs dharma"></textarea>
+    <button class="primary" id="saveBtn">Save Attendance & Notes</button>
+    <div class="status" id="saveStatus"></div>
+  </div>
+</div>
+
+<div id="message-tab" style="display:none;">
+  <div class="card">
+    <label>Class</label>
+    <select id="msgClassSelect"></select>
+    <label>Date</label>
+    <select id="msgDateSelect"></select>
+    <button class="secondary" id="genMsgBtn">Generate Message</button>
+  </div>
+  <div class="card" id="msgOutputCard" style="display:none;">
+    <label>Copy this into your class WhatsApp group</label>
+    <div class="msg-box" id="msgOutput"></div>
+    <button class="primary" id="copyBtn">Copy to Clipboard</button>
+  </div>
+</div>
+
+<div id="manage-tab" style="display:none;">
+  <div id="pinGate" class="card">
+    <label>Admin PIN required</label>
+    <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Enter the shared admin PIN to manage teachers and students. This is a light barrier against accidental edits, not real security, since it's stored in the app itself.</div>
+    <input type="text" id="pinInput" placeholder="Enter PIN" inputmode="numeric">
+    <button class="primary" id="pinSubmit">Unlock</button>
+    <div id="pinError" style="color:var(--red); font-size:13px; margin-top:8px;"></div>
+  </div>
+  <div id="manageContent" style="display:none;">
+    <div class="card">
+      <label>Official Roster</label>
+      <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Loads the real Fall 2026 class rosters (all 7 classes, 68 students). This replaces whatever students are currently in the app, including any test data. Attendance history is kept.</div>
+      <button class="secondary" id="loadRosterBtn">Load Official Fall 2026 Roster</button>
+    </div>
+    <div class="card">
+      <label>Fix Class Names</label>
+      <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">If the dropdown is showing old or wrong class names (like generic age ranges instead of VANARA, BALA, LAVA, etc.), tap this to force-correct all 7 class names. Students and attendance stay untouched.</div>
+      <button class="secondary" id="fixNamesBtn">Fix Class Names Now</button>
+    </div>
+    <div class="card">
+      <label>Add a new class</label>
+      <div class="add-row">
+        <input type="text" id="newClassName" placeholder="e.g. New class name">
+        <button id="addClassBtn">Add</button>
+      </div>
+      <input type="text" id="newClassTeacher" placeholder="Teacher name(s), optional" style="margin-top:8px; margin-bottom:0;">
+    </div>
+    <div class="card">
+      <label>Existing classes</label>
+      <div id="classList"></div>
+    </div>
+    <div class="card">
+      <label>Reset for pilot</label>
+      <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Clears all students and attendance history. Class names stay. Use this before showing the app to your coordinator so you're not walking through test data.</div>
+      <button class="secondary" id="resetBtn" style="border-color:var(--red); color:var(--red);">Clear All Students & Attendance</button>
+    </div>
+    <div class="card">
+      <label>Add student to</label>
+      <select id="manageClassSelect"></select>
+      <div class="add-row" style="margin-top:8px;">
+        <input type="text" id="newStudentName" placeholder="Student name">
+        <input type="text" id="newStudentParent" placeholder="Parent contact (optional)" style="flex:1;">
+      </div>
+      <button class="secondary" id="addStudentBtn">Add Student</button>
+      <div id="studentManageList" style="margin-top:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<div id="reports-tab" style="display:none;">
+  <div class="card">
+    <label>Attendance by Class (year to date)</label>
+    <div id="reportsList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let state = { classes: [], students: [], attendance: {}, lessons: {}, sessionOverrides: {} };
+const STORAGE_KEY = 'sst-data-v1';
+const SUNDAY_DATES = ['2026-09-27','2026-10-04','2026-10-18','2026-10-25','2026-11-01','2026-11-15','2026-12-06','2026-12-13'];
+
+function fmtDateOpt(d) {
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function populateDateSelects() {
+  const html = SUNDAY_DATES.map(d => `<option value="${d}">${fmtDateOpt(d)}</option>`).join('');
+  document.getElementById('dateSelect').innerHTML = html;
+  document.getElementById('msgDateSelect').innerHTML = html;
+  const today = todayStr();
+  const nextUpcoming = SUNDAY_DATES.find(d => d >= today) || SUNDAY_DATES[SUNDAY_DATES.length - 1];
+  document.getElementById('dateSelect').value = nextUpcoming;
+  document.getElementById('msgDateSelect').value = nextUpcoming;
+}
+
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+async function loadState() {
+  try {
+    const res = await window.storage.get(STORAGE_KEY, true);
+    if (res && res.value) {
+      state = JSON.parse(res.value);
+      if (!state.sessionOverrides) state.sessionOverrides = {};
+    } else {
+      seedDefaults();
+      await saveState();
+    }
+  } catch (e) {
+    seedDefaults();
+    await saveState();
+  }
+}
+
+function seedDefaults() {
+  state.classes = [
+    { id: 'c1', name: 'VANARA Pre-K', teacher: '' },
+    { id: 'c2', name: 'BALA Kindergarten', teacher: 'Mittal Patel, Falguni Patel & Payal Doshi' },
+    { id: 'c3', name: 'LAVA 1st Grade', teacher: '' },
+    { id: 'c4', name: 'KUSHA 2nd Grade', teacher: '' },
+    { id: 'c5', name: 'DHRUVA 3rd & 4th Grades', teacher: '' },
+    { id: 'c6', name: 'GUHA 5th Grade', teacher: '' },
+    { id: 'c7', name: 'YUVA 6th & 7th Grades', teacher: '' }
+  ];
+  state.students = [];
+  state.attendance = {};
+  state.lessons = {};
+}
+
+async function saveState() {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(state), true);
+  } catch (e) {
+    console.error('Save failed', e);
+    showToast('Save failed, try again');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function attKey(classId, date) { return classId + '_' + date; }
+
+function getClassDates(classId) {
+  const dates = new Set();
+  Object.keys(state.attendance).forEach(k => {
+    if (k.startsWith(classId + '_')) dates.add(k.slice(classId.length + 1));
+  });
+  Object.keys(state.lessons).forEach(k => {
+    if (k.startsWith(classId + '_')) dates.add(k.slice(classId.length + 1));
+  });
+  return Array.from(dates).sort();
+}
+
+function getSessionNumber(classId, date) {
+  const dates = getClassDates(classId);
+  const before = dates.filter(d => d < date).length;
+  return before + 1;
+}
+
+function getEffectiveSession(classId, date) {
+  const key = attKey(classId, date);
+  const override = state.sessionOverrides[key];
+  if (override !== undefined && override !== '') return override;
+  return String(getSessionNumber(classId, date));
+}
+
+// ---------- Rendering ----------
+
+function renderClassSelects() {
+  const selects = ['classSelect', 'msgClassSelect', 'manageClassSelect'];
+  selects.forEach(id => {
+    const sel = document.getElementById(id);
+    const prev = sel.value;
+    sel.innerHTML = state.classes.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+    if (prev && state.classes.find(c => c.id === prev)) sel.value = prev;
+  });
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderStudentList() {
+  const classId = document.getElementById('classSelect').value;
+  const date = document.getElementById('dateSelect').value;
+  const list = document.getElementById('studentList');
+  const noStudents = document.getElementById('noStudents');
+  const students = state.students.filter(s => s.classId === classId);
+
+  const sessionEl = document.getElementById('sessionLabel');
+  const overrideInput = document.getElementById('sessionOverride');
+  if (classId && date) {
+    const auto = getSessionNumber(classId, date);
+    sessionEl.textContent = 'Auto-calculated: Class ' + auto;
+    const key = attKey(classId, date);
+    overrideInput.value = state.sessionOverrides[key] !== undefined ? state.sessionOverrides[key] : '';
+    overrideInput.placeholder = 'Auto: ' + auto + ' (edit to override)';
+  } else {
+    sessionEl.textContent = '';
+    overrideInput.value = '';
+  }
+
+  if (students.length === 0) {
+    list.innerHTML = '';
+    noStudents.style.display = 'block';
+    return;
+  }
+  noStudents.style.display = 'none';
+
+  const key = attKey(classId, date);
+  const dayAtt = state.attendance[key] || {};
+
+  list.innerHTML = students.map(s => {
+    const status = dayAtt[s.id];
+    return `
+      <div class="student-row">
+        <div class="name">${escapeHtml(s.name)}</div>
+        <div class="att-btns">
+          <button class="att-btn present ${status === 'present' ? 'on' : ''}" data-student="${s.id}" data-status="present">Present</button>
+          <button class="att-btn absent ${status === 'absent' ? 'on' : ''}" data-student="${s.id}" data-status="absent">Absent</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('.att-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sid = btn.dataset.student;
+      const status = btn.dataset.status;
+      const key = attKey(classId, date);
+      if (!state.attendance[key]) state.attendance[key] = {};
+      state.attendance[key][sid] = state.attendance[key][sid] === status ? undefined : status;
+      renderStudentList();
+    });
+  });
+
+  const lessonKey = attKey(classId, date);
+  document.getElementById('topicInput').value = state.lessons[lessonKey] || '';
+}
+
+function renderClassManageList() {
+  const list = document.getElementById('classList');
+  if (state.classes.length === 0) {
+    list.innerHTML = '<div class="empty">No classes yet.</div>';
+    return;
+  }
+  list.innerHTML = state.classes.map(c => {
+    const count = state.students.filter(s => s.classId === c.id).length;
+    return `
+      <div style="padding:10px 0; border-bottom:1px solid var(--border);">
+        <div class="student-row" style="padding:0 0 6px 0; border:none;">
+          <div class="name">${escapeHtml(c.name)} <span style="color:var(--muted);font-weight:400;">(${count} students)</span></div>
+          <div class="remove-x" data-class="${c.id}">Remove</div>
+        </div>
+        <input type="text" class="teacher-input" data-class="${c.id}" placeholder="Teacher name(s)" value="${escapeHtml(c.teacher || '')}" style="margin-bottom:0; font-size:13px; padding:8px;">
+      </div>`;
+  }).join('');
+  list.querySelectorAll('.remove-x').forEach(el => {
+    el.addEventListener('click', async () => {
+      const id = el.dataset.class;
+      if (!confirm('Remove this class and all its students/attendance data?')) return;
+      state.classes = state.classes.filter(c => c.id !== id);
+      state.students = state.students.filter(s => s.classId !== id);
+      await saveState();
+      renderAll();
+    });
+  });
+  list.querySelectorAll('.teacher-input').forEach(input => {
+    input.addEventListener('change', async () => {
+      const cls = state.classes.find(c => c.id === input.dataset.class);
+      if (cls) {
+        cls.teacher = input.value.trim();
+        await saveState();
+        showToast('Teacher name saved');
+      }
+    });
+  });
+}
+
+function renderStudentManageList() {
+  const classId = document.getElementById('manageClassSelect').value;
+  const list = document.getElementById('studentManageList');
+  const students = state.students.filter(s => s.classId === classId);
+  if (students.length === 0) {
+    list.innerHTML = '<div class="empty">No students in this class.</div>';
+    return;
+  }
+  list.innerHTML = students.map(s => `
+    <div class="student-row">
+      <div class="name">${escapeHtml(s.name)}${s.parent ? ` <span style="color:var(--muted);font-weight:400;font-size:13px;">(${escapeHtml(s.parent)})</span>` : ''}</div>
+      <div class="remove-x" data-student="${s.id}">Remove</div>
+    </div>`).join('');
+  list.querySelectorAll('.remove-x').forEach(el => {
+    el.addEventListener('click', async () => {
+      state.students = state.students.filter(s => s.id !== el.dataset.student);
+      await saveState();
+      renderStudentManageList();
+      renderClassManageList();
+    });
+  });
+}
+
+function renderReports() {
+  const list = document.getElementById('reportsList');
+  if (state.classes.length === 0) {
+    list.innerHTML = '<div class="empty">No classes yet.</div>';
+    return;
+  }
+
+  list.innerHTML = state.classes.map(c => {
+    const dates = getClassDates(c.id);
+    const students = state.students.filter(s => s.classId === c.id);
+
+    if (dates.length === 0 || students.length === 0) {
+      return `
+        <div style="padding:12px 0; border-bottom:1px solid var(--border);">
+          <div class="name">${escapeHtml(c.name)}</div>
+          <div style="font-size:13px; color:var(--muted);">No attendance recorded yet</div>
+        </div>`;
+    }
+
+    let presentCount = 0;
+    let totalMarks = 0;
+    const studentStats = students.map(s => ({ id: s.id, name: s.name, present: 0, total: 0 }));
+    const statsById = {};
+    studentStats.forEach(st => statsById[st.id] = st);
+
+    dates.forEach(date => {
+      const key = attKey(c.id, date);
+      const dayAtt = state.attendance[key] || {};
+      students.forEach(s => {
+        const status = dayAtt[s.id];
+        if (status === 'present' || status === 'absent') {
+          totalMarks++;
+          statsById[s.id].total++;
+          if (status === 'present') {
+            presentCount++;
+            statsById[s.id].present++;
+          }
+        }
+      });
+    });
+
+    const pct = totalMarks > 0 ? Math.round((presentCount / totalMarks) * 100) : null;
+    const barColor = pct === null ? 'var(--muted)' : pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--saffron)' : 'var(--red)';
+
+    const studentRows = studentStats.map(st => {
+      const sPct = st.total > 0 ? Math.round((st.present / st.total) * 100) : null;
+      const sColor = sPct === null ? 'var(--muted)' : sPct >= 80 ? 'var(--green)' : sPct >= 60 ? 'var(--saffron)' : 'var(--red)';
+      return `
+        <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px;">
+          <div>${escapeHtml(st.name)}</div>
+          <div style="color:${sColor}; font-weight:600;">${sPct === null ? 'no data' : sPct + '% (' + st.present + '/' + st.total + ')'}</div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div style="padding:12px 0; border-bottom:1px solid var(--border);">
+        <div class="student-row" style="padding:0 0 6px 0; border:none; cursor:pointer;" data-toggle="${c.id}">
+          <div class="name">${escapeHtml(c.name)} <span style="font-size:11px; color:var(--muted);">▾ students</span></div>
+          <div style="font-weight:700; color:${barColor};">${pct === null ? '—' : pct + '%'}</div>
+        </div>
+        <div style="font-size:12px; color:var(--muted);">${dates.length} session${dates.length === 1 ? '' : 's'} logged · ${students.length} student${students.length === 1 ? '' : 's'}</div>
+        <div style="background:var(--border); border-radius:4px; height:6px; margin-top:6px; overflow:hidden;">
+          <div style="background:${barColor}; height:100%; width:${pct || 0}%;"></div>
+        </div>
+        <div id="students-${c.id}" style="display:none; margin-top:10px; padding-top:8px; border-top:1px dashed var(--border);">
+          ${studentRows || '<div class="empty">No students added yet</div>'}
+        </div>
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-toggle]').forEach(el => {
+    el.addEventListener('click', () => {
+      const target = document.getElementById('students-' + el.dataset.toggle);
+      target.style.display = target.style.display === 'none' ? 'block' : 'none';
+    });
+  });
+}
+
+function renderAll() {
+  renderClassSelects();
+  renderStudentList();
+  renderClassManageList();
+  renderStudentManageList();
+}
+
+// ---------- PIN gate ----------
+
+const ADMIN_PIN = '1421'; // temple street number, easy to remember, change as needed. Not real security.
+let unlocked = false;
+
+document.getElementById('pinSubmit').addEventListener('click', () => {
+  const val = document.getElementById('pinInput').value.trim();
+  if (val === ADMIN_PIN) {
+    unlocked = true;
+    document.getElementById('pinGate').style.display = 'none';
+    document.getElementById('manageContent').style.display = 'block';
+    document.getElementById('pinError').textContent = '';
+  } else {
+    document.getElementById('pinError').textContent = 'Incorrect PIN';
+  }
+});
+
+document.getElementById('pinInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('pinSubmit').click();
+});
+
+// ---------- Tabs ----------
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    ['attendance', 'message', 'manage', 'reports'].forEach(name => {
+      document.getElementById(name + '-tab').style.display = name === tab.dataset.tab ? 'block' : 'none';
+    });
+    if (tab.dataset.tab === 'reports') renderReports();
+  });
+});
+
+// ---------- Attendance tab ----------
+
+document.getElementById('classSelect').addEventListener('change', renderStudentList);
+document.getElementById('dateSelect').addEventListener('change', renderStudentList);
+document.getElementById('sessionOverride').addEventListener('change', async () => {
+  const classId = document.getElementById('classSelect').value;
+  const date = document.getElementById('dateSelect').value;
+  if (!classId || !date) return;
+  const key = attKey(classId, date);
+  const val = document.getElementById('sessionOverride').value.trim();
+  if (val === '') {
+    delete state.sessionOverrides[key];
+  } else {
+    state.sessionOverrides[key] = val;
+  }
+  await saveState();
+  showToast(val === '' ? 'Reverted to auto-calculated' : 'Class number overridden');
+});
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const classId = document.getElementById('classSelect').value;
+  const date = document.getElementById('dateSelect').value;
+  const key = attKey(classId, date);
+  state.lessons[key] = document.getElementById('topicInput').value;
+  await saveState();
+  const statusEl = document.getElementById('saveStatus');
+  statusEl.textContent = 'Saved ✓';
+  setTimeout(() => statusEl.textContent = '', 2000);
+  showToast('Attendance and notes saved');
+});
+
+// ---------- Message tab ----------
+
+document.getElementById('genMsgBtn').addEventListener('click', () => {
+  const classId = document.getElementById('msgClassSelect').value;
+  const date = document.getElementById('msgDateSelect').value;
+  const cls = state.classes.find(c => c.id === classId);
+  const key = attKey(classId, date);
+  const dayAtt = state.attendance[key] || {};
+  const topic = state.lessons[key] || '(not recorded)';
+  const students = state.students.filter(s => s.classId === classId);
+
+  const present = students.filter(s => dayAtt[s.id] === 'present').map(s => s.name);
+  const absent = students.filter(s => dayAtt[s.id] === 'absent').map(s => s.name);
+
+  const dateFmt = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '(no date selected)';
+  const sessionNum = classId && date ? getEffectiveSession(classId, date) : '';
+
+  let msg = `🪔 ${cls ? cls.name : ''} — Sunday School Update\nClass ${sessionNum} · ${dateFmt}\n\n`;
+  msg += `Today we covered:\n${topic}\n\n`;
+  if (present.length) msg += `Present (${present.length}): ${present.join(', ')}\n`;
+  if (absent.length) msg += `Absent (${absent.length}): ${absent.join(', ')}\n`;
+  if (!present.length && !absent.length) msg += `(No attendance recorded for this date yet)\n`;
+  msg += `\nHari Om 🙏`;
+
+  document.getElementById('msgOutput').textContent = msg;
+  document.getElementById('msgOutputCard').style.display = 'block';
+});
+
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const text = document.getElementById('msgOutput').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Copied! Paste into WhatsApp');
+  }).catch(() => {
+    showToast('Copy failed, select text manually');
+  });
+});
+
+// ---------- Manage tab ----------
+
+document.getElementById('addClassBtn').addEventListener('click', async () => {
+  const input = document.getElementById('newClassName');
+  const teacherInput = document.getElementById('newClassTeacher');
+  const name = input.value.trim();
+  if (!name) return;
+  state.classes.push({ id: 'c' + Date.now(), name, teacher: teacherInput.value.trim() });
+  input.value = '';
+  teacherInput.value = '';
+  await saveState();
+  renderAll();
+  showToast('Class added');
+});
+
+const CORRECT_NAMES = {
+  c1: 'VANARA Pre-K',
+  c2: 'BALA Kindergarten',
+  c3: 'LAVA 1st Grade',
+  c4: 'KUSHA 2nd Grade',
+  c5: 'DHRUVA 3rd & 4th Grades',
+  c6: 'GUHA 5th Grade',
+  c7: 'YUVA 6th & 7th Grades'
+};
+
+document.getElementById('fixNamesBtn').addEventListener('click', async () => {
+  state.classes.forEach(c => {
+    if (CORRECT_NAMES[c.id]) c.name = CORRECT_NAMES[c.id];
+  });
+  await saveState();
+  renderAll();
+  showToast('Class names corrected');
+});
+
+const OFFICIAL_ROSTER = {
+  c1: [ // VANARA Pre-K
+    ['Nimai Devang Bhavsar','Pre-K'],['Neeya Patel','Pre-K'],['Aryan Gowda','Pre-K'],['Anvika','Pre-K'],
+    ['Yara Acharya','Pre-K'],['Arya Brahmbhatt','Pre-K'],['Sarth Shah','Pre-K'],['Avika Rayavarapu','Pre-K'],['Nishanth Kasina','Pre-K']
+  ],
+  c2: [ // BALA Kindergarten
+    ['Aaryan Brahmbhatt','K'],['Kiara Kumbhani','K'],['Anaya Patel','K'],['Inaya Patel','K'],
+    ['Aadhya Shah','K'],['Siaan Padala','K'],['Avani Broughton','K']
+  ],
+  c3: [ // LAVA 1st Grade
+    ['Prisha Gowda','1st'],['Arav Patel','1st'],['Raahi Chowdhary','1st'],['Anika Das','1st'],['Tasmai Shivram','1st']
+  ],
+  c4: [ // KUSHA 2nd Grade
+    ['Abhinav Shukla','2nd'],['Vedansh Saginala','2nd'],['Trisha Patel','2nd'],['Krisha Gandhi','2nd'],['Gauthamkrishna Gurumoorthy','2nd']
+  ],
+  c5: [ // DHRUVA 3rd & 4th Grade
+    ['Dhrihaan Bhavsar','4th'],['Saaya Patel','3rd'],['Aarav Makhija','3rd'],['Kashvi Gotam','3rd'],['Sanvi Patel','4th'],
+    ['Sahana Acharya','3rd'],['Advik D Bhat','3rd'],['Atharva Mishra','4th'],['Ananya Shukla','4th'],['Shyna Patel','3rd'],
+    ['Samyaka Ingole','3rd'],['Aliyah Patel','3rd'],['Swara Patel','3rd'],['Antra Patel','3rd'],['Om Patel','4th'],
+    ['Shanaya Gandhi','4th'],['Aarya Patel','3rd'],['Anika Sarin','3rd'],['Arna Reddy','3rd'],['Akash Broughton','3rd']
+  ],
+  c6: [ // GUHA 5th Grade
+    ['Pranav Karanth','5th'],['Avni Makhija','5th'],['Ayan Patel','5th'],['Aadhya Patel','5th'],['Pravir Kolar','5th']
+  ],
+  c7: [ // YUVA 6th & 7th Grade
+    ['Myra Patel','6th'],['Yara Patel','6th'],['Akshat Dubey','6th'],['Vaishnavi Shukla','7th'],['Kavya Kumbhani','7th'],
+    ['Ava Patel','6th'],['Ruhi Patel','7th'],['Kristeena Kumar','7th'],['Aarush Das','7th'],['Anvi Reddy','7th'],['Minchu Shivram','7th']
+  ]
+};
+
+document.getElementById('loadRosterBtn').addEventListener('click', async () => {
+  if (!confirm('This replaces all current students with the official Fall 2026 roster (68 students across 7 classes). Attendance already recorded stays linked to matching names. Continue?')) return;
+  let newStudents = [];
+  Object.keys(OFFICIAL_ROSTER).forEach(classId => {
+    OFFICIAL_ROSTER[classId].forEach(([name, grade]) => {
+      newStudents.push({ id: 's_' + classId + '_' + name.replace(/\s+/g, '_').toLowerCase(), classId, name, grade, parent: '' });
+    });
+  });
+  state.students = newStudents;
+  await saveState();
+  renderAll();
+  showToast('Official roster loaded, 68 students across 7 classes');
+});
+
+document.getElementById('resetBtn').addEventListener('click', async () => {
+  if (!confirm('This deletes all students and attendance/lesson history. Class names are kept. Continue?')) return;
+  state.students = [];
+  state.attendance = {};
+  state.lessons = {};
+  await saveState();
+  renderAll();
+  showToast('Cleared. Ready for a clean demo.');
+});
+
+document.getElementById('addStudentBtn').addEventListener('click', async () => {
+  const classId = document.getElementById('manageClassSelect').value;
+  const nameInput = document.getElementById('newStudentName');
+  const parentInput = document.getElementById('newStudentParent');
+  const name = nameInput.value.trim();
+  if (!name || !classId) return;
+  state.students.push({ id: 's' + Date.now(), classId, name, parent: parentInput.value.trim() });
+  nameInput.value = '';
+  parentInput.value = '';
+  await saveState();
+  renderStudentManageList();
+  renderClassManageList();
+  showToast('Student added');
+});
+
+// ---------- Init ----------
+
+(async function init() {
+  populateDateSelects();
+  await loadState();
+  renderAll();
+})();
+</script>
+
+</body>
+</html>
