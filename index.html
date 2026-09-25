@@ -129,12 +129,18 @@
     font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none;
   }
   .toast.show { opacity: 1; }
+  .banner { border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.45; margin-bottom: 16px; display: none; }
+  .banner.warn { background: #fef3c7; border: 1px solid var(--saffron); }
+  .banner.error { background: #fee2e2; border: 1px solid var(--red); color: #7f1d1d; }
+  .check-row { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--ink); margin: 4px 0 12px; }
+  .check-row input { margin-top: 2px; }
 </style>
 </head>
 <body>
 
 <h1>🪔 Sunday School Tracker</h1>
 <div class="sub">Attendance, lesson notes, and parent updates</div>
+<div class="banner" id="storageBanner"></div>
 
 <div class="card" style="background:#fbf3e7; border-color:var(--saffron);">
   <div style="font-size:13px; line-height:1.5;">
@@ -162,13 +168,14 @@
   </div>
   <div class="card">
     <label>Students</label>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Each tap saves immediately.</div>
     <div id="studentList"></div>
     <div id="noStudents" class="empty" style="display:none;">No students in this class yet. Add them in "Manage Classes".</div>
   </div>
   <div class="card">
     <label>What was covered today</label>
     <textarea id="topicInput" placeholder="e.g. Bhagavad Gita Ch.2 intro, discussed karma vs dharma"></textarea>
-    <button class="primary" id="saveBtn">Save Attendance & Notes</button>
+    <button class="primary" id="saveBtn">Save Notes</button>
     <div class="status" id="saveStatus"></div>
   </div>
 </div>
@@ -179,6 +186,7 @@
     <select id="msgClassSelect"></select>
     <label>Date</label>
     <select id="msgDateSelect"></select>
+    <label class="check-row"><input type="checkbox" id="msgIncludeNames"> <span>Include student names. Everyone in the group will see who was absent. Off by default: the message then shows counts only.</span></label>
     <button class="secondary" id="genMsgBtn">Generate Message</button>
   </div>
   <div class="card" id="msgOutputCard" style="display:none;">
@@ -199,13 +207,8 @@
   <div id="manageContent" style="display:none;">
     <div class="card">
       <label>Official Roster</label>
-      <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Loads the real Fall 2026 class rosters (all 7 classes, 68 students). This replaces whatever students are currently in the app, including any test data. Attendance history is kept.</div>
+      <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Loads the Fall 2026 class rosters (<span id="rosterSummary"></span>). Replaces the current student list, including test data. Attendance and parent contacts are kept for students on the roster.</div>
       <button class="secondary" id="loadRosterBtn">Load Official Fall 2026 Roster</button>
-    </div>
-    <div class="card">
-      <label>Fix Class Names</label>
-      <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">If the dropdown is showing old or wrong class names (like generic age ranges instead of VANARA, BALA, LAVA, etc.), tap this to force-correct all 7 class names. Students and attendance stay untouched.</div>
-      <button class="secondary" id="fixNamesBtn">Fix Class Names Now</button>
     </div>
     <div class="card">
       <label>Add a new class</label>
@@ -221,7 +224,7 @@
     </div>
     <div class="card">
       <label>Reset for pilot</label>
-      <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Clears all students and attendance history. Class names stay. Use this before showing the app to your coordinator so you're not walking through test data.</div>
+      <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Deletes every student and all attendance and lesson history for every class. Class names stay. Cannot be undone, so export a CSV from Reports first. You'll be asked to type DELETE.</div>
       <button class="secondary" id="resetBtn" style="border-color:var(--red); color:var(--red);">Clear All Students & Attendance</button>
     </div>
     <div class="card">
@@ -242,14 +245,35 @@
     <label>Attendance by Class (year to date)</label>
     <div id="reportsList"></div>
   </div>
+  <div class="card">
+    <label>Backup / export</label>
+    <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Downloads every attendance mark and lesson note as a spreadsheet file (CSV). Do this regularly: it's your only backup.</div>
+    <button class="secondary" id="exportBtn">Download CSV</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-let state = { classes: [], students: [], attendance: {}, lessons: {}, sessionOverrides: {} };
 const STORAGE_KEY = 'sst-data-v1';
+const SCHEMA_VERSION = 2;
 const SUNDAY_DATES = ['2026-09-27','2026-10-04','2026-10-18','2026-10-25','2026-11-01','2026-11-15','2026-12-06','2026-12-13'];
+
+const CLASS_NAMES = {
+  c1: 'VANARA Pre-K',
+  c2: 'BALA Kindergarten',
+  c3: 'LAVA 1st Grade',
+  c4: 'KUSHA 2nd Grade',
+  c5: 'DHRUVA 3rd & 4th Grades',
+  c6: 'GUHA 5th Grade',
+  c7: 'YUVA 6th & 7th Grades'
+};
+
+let state = null;
+
+function emptyState() {
+  return { version: SCHEMA_VERSION, classes: [], students: [], attendance: {}, lessons: {}, sessionOverrides: {} };
+}
 
 function fmtDateOpt(d) {
   const dt = new Date(d + 'T00:00:00');
@@ -266,81 +290,152 @@ function populateDateSelects() {
   document.getElementById('msgDateSelect').value = nextUpcoming;
 }
 
+// Local calendar date. toISOString() is UTC, which is already "tomorrow" on a US Sunday evening.
 function todayStr() {
-  return new Date().toISOString().split('T')[0];
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// ---------- Storage ----------
+// Shared storage when running as a Claude artifact (all teachers see the same data),
+// otherwise this browser's localStorage (this device only).
+
+const hasSharedStorage = !!(window.storage && typeof window.storage.get === 'function');
+let loadFailed = false;
+
+async function readRaw() {
+  if (!hasSharedStorage) return localStorage.getItem(STORAGE_KEY);
+  try {
+    const res = await window.storage.get(STORAGE_KEY, true);
+    return res && res.value != null ? res.value : null;
+  } catch (e) {
+    // get() throws both for a missing key and for real failures. list() tells them apart,
+    // so a network blip is never mistaken for "no data yet" and overwritten with defaults.
+    if (typeof window.storage.list !== 'function') return null;
+    const listed = await window.storage.list(STORAGE_KEY, true);
+    const keys = (listed && listed.keys) || [];
+    if (!keys.some(k => (typeof k === 'string' ? k : k.key) === STORAGE_KEY)) return null;
+    throw e;
+  }
+}
+
+async function writeRaw(str) {
+  if (hasSharedStorage) await window.storage.set(STORAGE_KEY, str, true);
+  else localStorage.setItem(STORAGE_KEY, str);
+}
+
+// Brings any saved data up to the current schema. Add a new "if (v < N)" step for each
+// future data change instead of adding buttons that ask people to fix their own data.
+function migrate(s) {
+  s.classes = s.classes || [];
+  s.students = s.students || [];
+  s.attendance = s.attendance || {};
+  s.lessons = s.lessons || {};
+  s.sessionOverrides = s.sessionOverrides || {};
+  const v = s.version || 1;
+  if (v < 2) {
+    s.classes.forEach(c => { if (CLASS_NAMES[c.id]) c.name = CLASS_NAMES[c.id]; });
+  }
+  s.version = SCHEMA_VERSION;
+  return s;
 }
 
 async function loadState() {
   try {
-    const res = await window.storage.get(STORAGE_KEY, true);
-    if (res && res.value) {
-      state = JSON.parse(res.value);
-      if (!state.sessionOverrides) state.sessionOverrides = {};
+    const raw = await readRaw();
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const oldVersion = parsed.version || 1;
+      state = migrate(parsed);
+      if (oldVersion !== SCHEMA_VERSION) await writeRaw(JSON.stringify(state));
     } else {
       seedDefaults();
-      await saveState();
+      await writeRaw(JSON.stringify(state));
     }
   } catch (e) {
+    console.error('Load failed', e);
+    loadFailed = true;
     seedDefaults();
-    await saveState();
+  }
+  renderStorageBanner();
+}
+
+function renderStorageBanner() {
+  const el = document.getElementById('storageBanner');
+  if (loadFailed) {
+    el.className = 'banner error';
+    el.textContent = "Couldn't load saved data. Saving is turned off so existing records aren't overwritten. Check your connection and reload the page.";
+    el.style.display = 'block';
+  } else if (!hasSharedStorage) {
+    el.className = 'banner warn';
+    el.textContent = 'Saved on this device only. Other teachers will not see these records, and clearing browser data deletes them. Export a CSV from Reports regularly.';
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
   }
 }
 
 function seedDefaults() {
-  state.classes = [
-    { id: 'c1', name: 'VANARA Pre-K', teacher: '' },
-    { id: 'c2', name: 'BALA Kindergarten', teacher: 'Mittal Patel, Falguni Patel & Payal Doshi' },
-    { id: 'c3', name: 'LAVA 1st Grade', teacher: '' },
-    { id: 'c4', name: 'KUSHA 2nd Grade', teacher: '' },
-    { id: 'c5', name: 'DHRUVA 3rd & 4th Grades', teacher: '' },
-    { id: 'c6', name: 'GUHA 5th Grade', teacher: '' },
-    { id: 'c7', name: 'YUVA 6th & 7th Grades', teacher: '' }
-  ];
-  state.students = [];
-  state.attendance = {};
-  state.lessons = {};
+  state = emptyState();
+  state.classes = Object.keys(CLASS_NAMES).map(id => ({ id, name: CLASS_NAMES[id], teacher: '' }));
+  state.classes.find(c => c.id === 'c2').teacher = 'Mittal Patel, Falguni Patel & Payal Doshi';
 }
 
-async function saveState() {
-  try {
-    await window.storage.set(STORAGE_KEY, JSON.stringify(state), true);
-  } catch (e) {
-    console.error('Save failed', e);
-    showToast('Save failed, try again');
-  }
+// Every change goes through here: re-read the latest saved data, apply the change, write it back.
+// Several teachers save at the same time on Sunday morning. Writing a stale copy of the whole
+// state would silently erase another class's attendance.
+let saveQueue = Promise.resolve(true);
+function mutate(change) {
+  const run = async () => {
+    if (loadFailed) {
+      showToast('Not saved: data failed to load. Reload the page.');
+      return false;
+    }
+    try {
+      const raw = await readRaw();
+      if (raw) state = migrate(JSON.parse(raw));
+      change(state);
+      await writeRaw(JSON.stringify(state));
+      return true;
+    } catch (e) {
+      console.error('Save failed', e);
+      showToast('Save failed, check your connection and try again');
+      return false;
+    }
+  };
+  saveQueue = saveQueue.then(run, run);
+  return saveQueue;
 }
 
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
 function attKey(classId, date) { return classId + '_' + date; }
 
 function getClassDates(classId) {
   const dates = new Set();
-  Object.keys(state.attendance).forEach(k => {
-    if (k.startsWith(classId + '_')) dates.add(k.slice(classId.length + 1));
-  });
-  Object.keys(state.lessons).forEach(k => {
-    if (k.startsWith(classId + '_')) dates.add(k.slice(classId.length + 1));
+  [state.attendance, state.lessons].forEach(obj => {
+    Object.keys(obj).forEach(k => {
+      if (k.startsWith(classId + '_')) dates.add(k.slice(classId.length + 1));
+    });
   });
   return Array.from(dates).sort();
 }
 
-function getSessionNumber(classId, date) {
-  const dates = getClassDates(classId);
-  const before = dates.filter(d => d < date).length;
-  return before + 1;
+// Class number comes from the fixed calendar, so it doesn't shift when an earlier week is logged late.
+function getSessionNumber(date) {
+  return SUNDAY_DATES.indexOf(date) + 1;
 }
 
 function getEffectiveSession(classId, date) {
-  const key = attKey(classId, date);
-  const override = state.sessionOverrides[key];
+  const override = state.sessionOverrides[attKey(classId, date)];
   if (override !== undefined && override !== '') return override;
-  return String(getSessionNumber(classId, date));
+  return String(getSessionNumber(date));
 }
 
 // ---------- Rendering ----------
@@ -371,7 +466,7 @@ function renderStudentList() {
   const sessionEl = document.getElementById('sessionLabel');
   const overrideInput = document.getElementById('sessionOverride');
   if (classId && date) {
-    const auto = getSessionNumber(classId, date);
+    const auto = getSessionNumber(date);
     sessionEl.textContent = 'Auto-calculated: Class ' + auto;
     const key = attKey(classId, date);
     overrideInput.value = state.sessionOverrides[key] !== undefined ? state.sessionOverrides[key] : '';
@@ -387,6 +482,7 @@ function renderStudentList() {
     return;
   }
   noStudents.style.display = 'none';
+
 
   const key = attKey(classId, date);
   const dayAtt = state.attendance[key] || {};
@@ -404,18 +500,39 @@ function renderStudentList() {
   }).join('');
 
   list.querySelectorAll('.att-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const sid = btn.dataset.student;
-      const status = btn.dataset.status;
-      const key = attKey(classId, date);
-      if (!state.attendance[key]) state.attendance[key] = {};
-      state.attendance[key][sid] = state.attendance[key][sid] === status ? undefined : status;
-      renderStudentList();
+      const current = (state.attendance[key] || {})[sid];
+      const next = current === btn.dataset.status ? null : btn.dataset.status;
+      applyMark(state, key, sid, next);
+      renderAttendanceButtons();
+      const ok = await mutate(s => applyMark(s, key, sid, next));
+      renderAttendanceButtons();
+      if (!ok) renderStudentList();
     });
   });
+}
 
-  const lessonKey = attKey(classId, date);
-  document.getElementById('topicInput').value = state.lessons[lessonKey] || '';
+function applyMark(s, key, sid, status) {
+  if (!s.attendance[key]) s.attendance[key] = {};
+  if (status) s.attendance[key][sid] = status;
+  else delete s.attendance[key][sid];
+}
+
+// Repaints button states only, so a slow save never wipes the note being typed.
+function renderAttendanceButtons() {
+  const key = attKey(document.getElementById('classSelect').value, document.getElementById('dateSelect').value);
+  const dayAtt = state.attendance[key] || {};
+  document.querySelectorAll('#studentList .att-btn').forEach(btn => {
+    btn.classList.toggle('on', dayAtt[btn.dataset.student] === btn.dataset.status);
+  });
+}
+
+function loadTopic() {
+  const key = attKey(document.getElementById('classSelect').value, document.getElementById('dateSelect').value);
+  const input = document.getElementById('topicInput');
+  input.dataset.key = key;
+  input.value = state.lessons[key] || '';
 }
 
 function renderClassManageList() {
@@ -439,20 +556,24 @@ function renderClassManageList() {
     el.addEventListener('click', async () => {
       const id = el.dataset.class;
       if (!confirm('Remove this class and all its students/attendance data?')) return;
-      state.classes = state.classes.filter(c => c.id !== id);
-      state.students = state.students.filter(s => s.classId !== id);
-      await saveState();
+      await mutate(s => {
+        s.classes = s.classes.filter(c => c.id !== id);
+        s.students = s.students.filter(st => st.classId !== id);
+        ['attendance', 'lessons', 'sessionOverrides'].forEach(field => {
+          Object.keys(s[field]).forEach(k => { if (k.startsWith(id + '_')) delete s[field][k]; });
+        });
+      });
       renderAll();
     });
   });
   list.querySelectorAll('.teacher-input').forEach(input => {
     input.addEventListener('change', async () => {
-      const cls = state.classes.find(c => c.id === input.dataset.class);
-      if (cls) {
-        cls.teacher = input.value.trim();
-        await saveState();
-        showToast('Teacher name saved');
-      }
+      const teacher = input.value.trim();
+      const ok = await mutate(s => {
+        const cls = s.classes.find(c => c.id === input.dataset.class);
+        if (cls) cls.teacher = teacher;
+      });
+      if (ok) showToast('Teacher name saved');
     });
   });
 }
@@ -472,8 +593,9 @@ function renderStudentManageList() {
     </div>`).join('');
   list.querySelectorAll('.remove-x').forEach(el => {
     el.addEventListener('click', async () => {
-      state.students = state.students.filter(s => s.id !== el.dataset.student);
-      await saveState();
+      const st = state.students.find(x => x.id === el.dataset.student);
+      if (!confirm('Remove ' + (st ? st.name : 'this student') + '?')) return;
+      await mutate(s => { s.students = s.students.filter(x => x.id !== el.dataset.student); });
       renderStudentManageList();
       renderClassManageList();
     });
@@ -561,6 +683,7 @@ function renderReports() {
 function renderAll() {
   renderClassSelects();
   renderStudentList();
+  loadTopic();
   renderClassManageList();
   renderStudentManageList();
 }
@@ -601,34 +724,52 @@ document.querySelectorAll('.tab').forEach(tab => {
 
 // ---------- Attendance tab ----------
 
-document.getElementById('classSelect').addEventListener('change', renderStudentList);
-document.getElementById('dateSelect').addEventListener('change', renderStudentList);
+function onAttendanceSelection() {
+  saveTopic(true); // captures the old class/date key and text before the reload below
+  renderStudentList();
+  loadTopic();
+}
+document.getElementById('classSelect').addEventListener('change', onAttendanceSelection);
+document.getElementById('dateSelect').addEventListener('change', onAttendanceSelection);
 document.getElementById('sessionOverride').addEventListener('change', async () => {
   const classId = document.getElementById('classSelect').value;
   const date = document.getElementById('dateSelect').value;
   if (!classId || !date) return;
   const key = attKey(classId, date);
   const val = document.getElementById('sessionOverride').value.trim();
-  if (val === '') {
-    delete state.sessionOverrides[key];
-  } else {
-    state.sessionOverrides[key] = val;
-  }
-  await saveState();
-  showToast(val === '' ? 'Reverted to auto-calculated' : 'Class number overridden');
+  const ok = await mutate(s => {
+    if (val === '') delete s.sessionOverrides[key];
+    else s.sessionOverrides[key] = val;
+  });
+  if (ok) showToast(val === '' ? 'Reverted to auto-calculated' : 'Class number overridden');
 });
 
-document.getElementById('saveBtn').addEventListener('click', async () => {
-  const classId = document.getElementById('classSelect').value;
-  const date = document.getElementById('dateSelect').value;
-  const key = attKey(classId, date);
-  state.lessons[key] = document.getElementById('topicInput').value;
-  await saveState();
+// Saves under the class/date the note was loaded for, so switching the dropdown
+// right after typing can't file the note under the wrong week.
+async function saveTopic(quiet) {
+  clearTimeout(topicTimer);
+  const input = document.getElementById('topicInput');
+  const key = input.dataset.key;
+  if (!key) return;
+  const text = input.value;
+  if ((state.lessons[key] || '') === text && quiet) return;
+  const ok = await mutate(s => {
+    if (text.trim()) s.lessons[key] = text;
+    else delete s.lessons[key];
+  });
+  if (!ok) return;
   const statusEl = document.getElementById('saveStatus');
-  statusEl.textContent = 'Saved ✓';
+  statusEl.textContent = 'Notes saved ✓';
   setTimeout(() => statusEl.textContent = '', 2000);
-  showToast('Attendance and notes saved');
+  if (!quiet) showToast('Notes saved');
+}
+let topicTimer;
+document.getElementById('topicInput').addEventListener('input', () => {
+  clearTimeout(topicTimer);
+  topicTimer = setTimeout(() => saveTopic(true), 1500);
 });
+document.getElementById('topicInput').addEventListener('change', () => saveTopic(true));
+document.getElementById('saveBtn').addEventListener('click', () => saveTopic(false));
 
 // ---------- Message tab ----------
 
@@ -643,15 +784,23 @@ document.getElementById('genMsgBtn').addEventListener('click', () => {
 
   const present = students.filter(s => dayAtt[s.id] === 'present').map(s => s.name);
   const absent = students.filter(s => dayAtt[s.id] === 'absent').map(s => s.name);
+  const includeNames = document.getElementById('msgIncludeNames').checked;
 
   const dateFmt = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '(no date selected)';
   const sessionNum = classId && date ? getEffectiveSession(classId, date) : '';
+  const unmarked = students.length - present.length - absent.length;
 
   let msg = `🪔 ${cls ? cls.name : ''} — Sunday School Update\nClass ${sessionNum} · ${dateFmt}\n\n`;
   msg += `Today we covered:\n${topic}\n\n`;
-  if (present.length) msg += `Present (${present.length}): ${present.join(', ')}\n`;
-  if (absent.length) msg += `Absent (${absent.length}): ${absent.join(', ')}\n`;
-  if (!present.length && !absent.length) msg += `(No attendance recorded for this date yet)\n`;
+  if (!present.length && !absent.length) {
+    msg += `(No attendance recorded for this date yet)\n`;
+  } else if (includeNames) {
+    if (present.length) msg += `Present (${present.length}): ${present.join(', ')}\n`;
+    if (absent.length) msg += `Absent (${absent.length}): ${absent.join(', ')}\n`;
+  } else {
+    msg += `Attendance: ${present.length} of ${students.length} students present\n`;
+  }
+  if (unmarked > 0) showToast(unmarked + ' student' + (unmarked === 1 ? '' : 's') + ' not marked yet');
   msg += `\nHari Om 🙏`;
 
   document.getElementById('msgOutput').textContent = msg;
@@ -674,31 +823,12 @@ document.getElementById('addClassBtn').addEventListener('click', async () => {
   const teacherInput = document.getElementById('newClassTeacher');
   const name = input.value.trim();
   if (!name) return;
-  state.classes.push({ id: 'c' + Date.now(), name, teacher: teacherInput.value.trim() });
+  const cls = { id: 'c' + Date.now(), name, teacher: teacherInput.value.trim() };
+  if (!await mutate(s => { s.classes.push(cls); })) return;
   input.value = '';
   teacherInput.value = '';
-  await saveState();
   renderAll();
   showToast('Class added');
-});
-
-const CORRECT_NAMES = {
-  c1: 'VANARA Pre-K',
-  c2: 'BALA Kindergarten',
-  c3: 'LAVA 1st Grade',
-  c4: 'KUSHA 2nd Grade',
-  c5: 'DHRUVA 3rd & 4th Grades',
-  c6: 'GUHA 5th Grade',
-  c7: 'YUVA 6th & 7th Grades'
-};
-
-document.getElementById('fixNamesBtn').addEventListener('click', async () => {
-  state.classes.forEach(c => {
-    if (CORRECT_NAMES[c.id]) c.name = CORRECT_NAMES[c.id];
-  });
-  await saveState();
-  renderAll();
-  showToast('Class names corrected');
 });
 
 const OFFICIAL_ROSTER = {
@@ -731,28 +861,41 @@ const OFFICIAL_ROSTER = {
   ]
 };
 
+const ROSTER_COUNT = Object.values(OFFICIAL_ROSTER).reduce((n, list) => n + list.length, 0);
+const ROSTER_SUMMARY = Object.keys(OFFICIAL_ROSTER).length + ' classes, ' + ROSTER_COUNT + ' students';
+document.getElementById('rosterSummary').textContent = ROSTER_SUMMARY;
+
 document.getElementById('loadRosterBtn').addEventListener('click', async () => {
-  if (!confirm('This replaces all current students with the official Fall 2026 roster (68 students across 7 classes). Attendance already recorded stays linked to matching names. Continue?')) return;
-  let newStudents = [];
-  Object.keys(OFFICIAL_ROSTER).forEach(classId => {
-    OFFICIAL_ROSTER[classId].forEach(([name, grade]) => {
-      newStudents.push({ id: 's_' + classId + '_' + name.replace(/\s+/g, '_').toLowerCase(), classId, name, grade, parent: '' });
+  if (!confirm('This replaces all current students with the Fall 2026 roster (' + ROSTER_SUMMARY + '). Students you added by hand will be removed. Continue?')) return;
+  const ok = await mutate(s => {
+    const existing = {};
+    s.students.forEach(st => existing[st.id] = st);
+    const newStudents = [];
+    Object.keys(OFFICIAL_ROSTER).forEach(classId => {
+      OFFICIAL_ROSTER[classId].forEach(([name, grade]) => {
+        const id = 's_' + classId + '_' + name.replace(/\s+/g, '_').toLowerCase();
+        newStudents.push({ id, classId, name, grade, parent: existing[id] ? existing[id].parent || '' : '' });
+      });
     });
+    s.students = newStudents;
   });
-  state.students = newStudents;
-  await saveState();
+  if (!ok) return;
   renderAll();
-  showToast('Official roster loaded, 68 students across 7 classes');
+  showToast('Roster loaded: ' + ROSTER_SUMMARY);
 });
 
 document.getElementById('resetBtn').addEventListener('click', async () => {
-  if (!confirm('This deletes all students and attendance/lesson history. Class names are kept. Continue?')) return;
-  state.students = [];
-  state.attendance = {};
-  state.lessons = {};
-  await saveState();
+  const typed = prompt('This deletes every student and ALL attendance and lesson history, for every teacher. It cannot be undone.\n\nType DELETE to confirm.');
+  if (typed !== 'DELETE') { if (typed !== null) showToast('Not deleted'); return; }
+  const ok = await mutate(s => {
+    s.students = [];
+    s.attendance = {};
+    s.lessons = {};
+    s.sessionOverrides = {};
+  });
+  if (!ok) return;
   renderAll();
-  showToast('Cleared. Ready for a clean demo.');
+  showToast('All students and history cleared');
 });
 
 document.getElementById('addStudentBtn').addEventListener('click', async () => {
@@ -761,18 +904,50 @@ document.getElementById('addStudentBtn').addEventListener('click', async () => {
   const parentInput = document.getElementById('newStudentParent');
   const name = nameInput.value.trim();
   if (!name || !classId) return;
-  state.students.push({ id: 's' + Date.now(), classId, name, parent: parentInput.value.trim() });
+  const student = { id: 's' + Date.now(), classId, name, parent: parentInput.value.trim() };
+  if (!await mutate(s => { s.students.push(student); })) return;
   nameInput.value = '';
   parentInput.value = '';
-  await saveState();
   renderStudentManageList();
   renderClassManageList();
   showToast('Student added');
 });
 
+// ---------- Export ----------
+
+function csvCell(v) {
+  const str = String(v == null ? '' : v);
+  return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+}
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const rows = [['Class', 'Date', 'Class #', 'Student', 'Grade', 'Status', 'Lesson notes']];
+  state.classes.forEach(c => {
+    const students = state.students.filter(s => s.classId === c.id);
+    getClassDates(c.id).forEach(date => {
+      const key = attKey(c.id, date);
+      const dayAtt = state.attendance[key] || {};
+      const lesson = state.lessons[key] || '';
+      students.forEach(s => {
+        rows.push([c.name, date, getEffectiveSession(c.id, date), s.name, s.grade || '', dayAtt[s.id] || 'not marked', lesson]);
+      });
+    });
+  });
+  if (rows.length === 1) { showToast('Nothing recorded yet'); return; }
+  const blob = new Blob([rows.map(r => r.map(csvCell).join(',')).join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sunday-school-attendance-' + todayStr() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
 // ---------- Init ----------
 
 (async function init() {
+  state = emptyState();
   populateDateSelects();
   await loadState();
   renderAll();
