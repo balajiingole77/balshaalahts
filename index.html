@@ -1,179 +1,245 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sunday School Tracker</title>
+<title>Balshala Sunday School Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <style>
   :root {
-    --saffron: #d97706;
-    --saffron-dark: #b45309;
-    --bg: #fdf8f3;
+    --saffron: #c2410c;
+    --saffron-dark: #9a3412;
+    --bg: #fbf6ef;
     --card: #ffffff;
+    --field: #ffffff;
+    --tint: #fbf0e2;
     --ink: #2a1e14;
-    --muted: #8a7a6a;
-    --border: #eadfcf;
-    --green: #16a34a;
-    --red: #dc2626;
+    --muted: #7d6b5a;
+    --border: #eadccb;
+    --on-accent: #ffffff;
+    --green: #15803d;
+    --red: #b91c1c;
+    --amber: #b45309;
+    --warn-bg: #fef3c7;
+    --error-bg: #fee2e2;
+    --error-ink: #7f1d1d;
+    --toast-bg: #2a1e14;
+    --toast-ink: #ffffff;
+    --scrim: rgba(42, 30, 20, 0.45);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --saffron: #f59e0b;
+      --saffron-dark: #d97706;
+      --bg: #17120d;
+      --card: #211a13;
+      --field: #1b150f;
+      --tint: #2b2016;
+      --ink: #f3e9dc;
+      --muted: #b3a08b;
+      --border: #3a2e22;
+      --on-accent: #1a1209;
+      --green: #4ade80;
+      --red: #f87171;
+      --amber: #fbbf24;
+      --warn-bg: #3a2c10;
+      --error-bg: #3b1616;
+      --error-ink: #fecaca;
+      --toast-bg: #f3e9dc;
+      --toast-ink: #17120d;
+      --scrim: rgba(0, 0, 0, 0.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --saffron: #f59e0b;
+    --saffron-dark: #d97706;
+    --bg: #17120d;
+    --card: #211a13;
+    --field: #1b150f;
+    --tint: #2b2016;
+    --ink: #f3e9dc;
+    --muted: #b3a08b;
+    --border: #3a2e22;
+    --on-accent: #1a1209;
+    --green: #4ade80;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --warn-bg: #3a2c10;
+    --error-bg: #3b1616;
+    --error-ink: #fecaca;
+    --toast-bg: #f3e9dc;
+    --toast-ink: #17120d;
+    --scrim: rgba(0, 0, 0, 0.6);
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: var(--bg);
     color: var(--ink);
-    padding: 16px;
-    max-width: 520px;
-    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
   }
-  h1 { font-size: 20px; margin: 0 0 4px; }
+  .wrap { max-width: 540px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 21px; margin: 0 0 4px; text-wrap: balance; }
   .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
   .card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
-  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
-  select, input[type=text], input[type=date], textarea {
+  .card.pitch { background: var(--tint); border-color: var(--saffron); font-size: 13px; line-height: 1.5; }
+  label, .label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .hint { font-size: 13px; color: var(--muted); margin-bottom: 10px; line-height: 1.45; }
+  select, input[type=text], textarea {
     width: 100%;
     padding: 10px;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 15px;
     margin-bottom: 12px;
-    background: #fff;
+    background: var(--field);
     color: var(--ink);
+    font-family: inherit;
   }
-  textarea { resize: vertical; min-height: 70px; font-family: inherit; }
-  .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  textarea { resize: vertical; min-height: 70px; }
+  :focus-visible { outline: 2px solid var(--saffron); outline-offset: 2px; }
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
   .tab {
-    flex: 1;
-    min-width: 80px;
-    padding: 10px 8px;
+    padding: 10px 4px;
     text-align: center;
     border-radius: 8px;
-    background: #fff;
+    background: var(--card);
     border: 1px solid var(--border);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     color: var(--muted);
+    font-family: inherit;
   }
-  .tab.active { background: var(--saffron); color: #fff; border-color: var(--saffron); }
+  .tab.active { background: var(--saffron); color: var(--on-accent); border-color: var(--saffron); }
   .student-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
     padding: 10px 0;
     border-bottom: 1px solid var(--border);
   }
   .student-row:last-child { border-bottom: none; }
-  .name { font-size: 15px; font-weight: 500; }
-  .att-btns { display: flex; gap: 6px; }
-  .att-btn {
-    padding: 6px 12px;
+  .name { font-size: 15px; font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
+  .att-btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .att-btn, .ghost {
+    padding: 7px 12px;
     border-radius: 6px;
     border: 1px solid var(--border);
-    background: #fff;
+    background: var(--field);
+    color: var(--ink);
     font-size: 13px;
     cursor: pointer;
     font-weight: 600;
+    font-family: inherit;
   }
-  .att-btn.present.on { background: var(--green); color: #fff; border-color: var(--green); }
-  .att-btn.absent.on { background: var(--red); color: #fff; border-color: var(--red); }
-  button.primary {
+  .att-btn.present.on { background: var(--green); color: var(--card); border-color: var(--green); }
+  .att-btn.absent.on { background: var(--red); color: var(--card); border-color: var(--red); }
+  .ghost { color: var(--muted); font-weight: 500; padding: 4px 8px; }
+  .tally { display: flex; gap: 12px; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+  .tally b { color: var(--ink); }
+  button.primary, button.secondary {
     width: 100%;
     padding: 12px;
-    background: var(--saffron);
-    color: #fff;
-    border: none;
     border-radius: 8px;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
+    font-family: inherit;
   }
+  button.primary { background: var(--saffron); color: var(--on-accent); border: none; }
   button.primary:active { background: var(--saffron-dark); }
-  button.secondary {
-    width: 100%;
-    padding: 10px;
-    background: #fff;
-    color: var(--saffron);
-    border: 1px solid var(--saffron);
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 8px;
-  }
-  .add-row { display: flex; gap: 8px; }
-  .add-row input { flex: 1; margin-bottom: 0; }
-  .add-row button { padding: 10px 14px; background: var(--saffron); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-  .remove-x { color: var(--muted); cursor: pointer; font-size: 13px; padding: 4px 8px; }
+  button.primary.danger { background: var(--red); color: var(--card); }
+  button.primary:disabled { opacity: 0.45; cursor: not-allowed; }
+  button.secondary { background: var(--field); color: var(--saffron); border: 1px solid var(--saffron); margin-top: 8px; }
+  button.secondary.danger { color: var(--red); border-color: var(--red); }
+  .add-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .add-row input { flex: 1 1 140px; margin-bottom: 0; }
+  .add-row button { padding: 10px 14px; background: var(--saffron); color: var(--on-accent); border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: inherit; }
   .msg-box {
     white-space: pre-wrap;
-    background: #fbf3e7;
+    background: var(--tint);
     border: 1px dashed var(--saffron);
     border-radius: 8px;
     padding: 12px;
     font-size: 14px;
     margin-bottom: 12px;
     line-height: 1.5;
+    overflow-wrap: anywhere;
   }
+  .check-row { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--ink); margin: 0 0 12px; text-transform: none; letter-spacing: 0; font-weight: 400; }
+  .check-row input { margin-top: 2px; }
   .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 20px 0; }
-  .status { font-size: 12px; color: var(--muted); text-align: center; margin-top: 8px; }
+  .status { font-size: 12px; color: var(--muted); text-align: center; margin-top: 8px; min-height: 1em; }
+  .banner { border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.45; margin-bottom: 14px; }
+  .banner.info { background: var(--tint); border: 1px solid var(--border); color: var(--muted); }
+  .banner.warn { background: var(--warn-bg); border: 1px solid var(--amber); }
+  .banner.error { background: var(--error-bg); border: 1px solid var(--red); color: var(--error-ink); }
+  .report-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .report-row:last-child { border-bottom: none; }
+  .report-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; background: none; border: none; width: 100%; padding: 0 0 6px; color: inherit; font: inherit; text-align: left; }
+  .pct { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .meta { font-size: 12px; color: var(--muted); }
+  .bar { background: var(--border); border-radius: 4px; height: 6px; margin-top: 6px; overflow: hidden; }
+  .bar > div { height: 100%; }
+  .stu-stat { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 13px; font-variant-numeric: tabular-nums; }
   .toast {
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 20px;
-    font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    background: var(--toast-bg); color: var(--toast-ink); padding: 10px 18px; border-radius: 20px;
+    font-size: 13px; opacity: 0; transition: opacity 0.25s; pointer-events: none; max-width: calc(100% - 32px); text-align: center;
   }
   .toast.show { opacity: 1; }
-  .banner { border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.45; margin-bottom: 16px; display: none; }
-  .banner.warn { background: #fef3c7; border: 1px solid var(--saffron); }
-  .banner.error { background: #fee2e2; border: 1px solid var(--red); color: #7f1d1d; }
-  .check-row { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--ink); margin: 4px 0 12px; }
-  .check-row input { margin-top: 2px; }
+  .modal-backdrop { position: fixed; inset: 0; background: var(--scrim); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  .modal { background: var(--card); color: var(--ink); border-radius: 14px; padding: 18px; width: 100%; max-width: 420px; border: 1px solid var(--border); }
+  .modal h2 { font-size: 17px; margin: 0 0 8px; text-wrap: balance; }
+  .modal p { font-size: 14px; line-height: 1.5; margin: 0 0 14px; color: var(--muted); white-space: pre-line; }
+  .modal-actions { display: flex; gap: 8px; }
+  .modal-actions button { margin-top: 0; }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
 </style>
-</head>
-<body>
 
+<div class="wrap">
 <h1>🪔 Sunday School Tracker</h1>
 <div class="sub">Attendance, lesson notes, and parent updates</div>
-<div class="banner" id="storageBanner"></div>
+<div class="banner info" id="storageBanner">Connecting to shared data…</div>
 
-<div class="card" style="background:#fbf3e7; border-color:var(--saffron);">
-  <div style="font-size:13px; line-height:1.5;">
-    <strong>Pilot proposal</strong><br>
-    Built by a Balshala teacher to try for one class over a few weeks. Replaces paper attendance with a tap-to-mark roster, and generates a ready-to-paste weekly update for the class WhatsApp group. No new accounts or apps for parents, nothing changes for them except getting a clearer weekly note. If it's useful, happy to expand it. If not, no harm done, it's a link, not a system.
-  </div>
+<div class="card pitch">
+  <strong>Pilot proposal</strong><br>
+  Built by a Balshala teacher to try for one class over a few weeks. Replaces paper attendance with a tap-to-mark roster, and generates a ready-to-paste weekly update for the class WhatsApp group. No new accounts or apps for parents, nothing changes for them except getting a clearer weekly note. If it's useful, happy to expand it. If not, no harm done, it's a link, not a system.
 </div>
 
-<div class="tabs">
-  <div class="tab active" data-tab="attendance">Attendance</div>
-  <div class="tab" data-tab="message">Parent Message</div>
-  <div class="tab" data-tab="manage">Manage Classes</div>
-  <div class="tab" data-tab="reports">Reports</div>
+<div class="tabs" role="tablist">
+  <button class="tab active" data-tab="attendance" role="tab">Attendance</button>
+  <button class="tab" data-tab="message" role="tab">Message</button>
+  <button class="tab" data-tab="manage" role="tab">Manage</button>
+  <button class="tab" data-tab="reports" role="tab">Reports</button>
 </div>
 
 <div id="attendance-tab">
   <div class="card">
-    <label>Class</label>
+    <label for="classSelect">Class</label>
     <select id="classSelect"></select>
-    <label>Date</label>
+    <label for="dateSelect">Date</label>
     <select id="dateSelect"></select>
-    <div id="sessionLabel" style="font-size:13px; color:var(--muted); margin-top:8px; margin-bottom:10px;"></div>
-    <label>Class # (override)</label>
-    <input type="text" id="sessionOverride" placeholder="Auto-calculated, edit to override">
+    <div id="sessionLabel" class="hint" style="margin-bottom:8px;"></div>
+    <label for="sessionOverride">Class # (override)</label>
+    <input type="text" id="sessionOverride" placeholder="Auto-calculated, edit to override" style="margin-bottom:0;">
   </div>
   <div class="card">
-    <label>Students</label>
-    <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Each tap saves immediately.</div>
+    <div class="label">Students</div>
+    <div class="tally" id="tally"></div>
+    <div class="hint" style="font-size:12px; margin-bottom:4px;">Each tap saves immediately.</div>
     <div id="studentList"></div>
-    <div id="noStudents" class="empty" style="display:none;">No students in this class yet. Add them in "Manage Classes".</div>
+    <div id="noStudents" class="empty" style="display:none;">No students in this class yet. Add them in Manage.</div>
   </div>
   <div class="card">
-    <label>What was covered today</label>
+    <label for="topicInput">What was covered today</label>
     <textarea id="topicInput" placeholder="e.g. Bhagavad Gita Ch.2 intro, discussed karma vs dharma"></textarea>
     <button class="primary" id="saveBtn">Save Notes</button>
     <div class="status" id="saveStatus"></div>
@@ -182,15 +248,15 @@
 
 <div id="message-tab" style="display:none;">
   <div class="card">
-    <label>Class</label>
+    <label for="msgClassSelect">Class</label>
     <select id="msgClassSelect"></select>
-    <label>Date</label>
+    <label for="msgDateSelect">Date</label>
     <select id="msgDateSelect"></select>
     <label class="check-row"><input type="checkbox" id="msgIncludeNames"> <span>Include student names. Everyone in the group will see who was absent. Off by default: the message then shows counts only.</span></label>
     <button class="secondary" id="genMsgBtn">Generate Message</button>
   </div>
   <div class="card" id="msgOutputCard" style="display:none;">
-    <label>Copy this into your class WhatsApp group</label>
+    <div class="label">Copy this into your class WhatsApp group</div>
     <div class="msg-box" id="msgOutput"></div>
     <button class="primary" id="copyBtn">Copy to Clipboard</button>
   </div>
@@ -198,20 +264,20 @@
 
 <div id="manage-tab" style="display:none;">
   <div id="pinGate" class="card">
-    <label>Admin PIN required</label>
-    <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Enter the shared admin PIN to manage teachers and students. This is a light barrier against accidental edits, not real security, since it's stored in the app itself.</div>
-    <input type="text" id="pinInput" placeholder="Enter PIN" inputmode="numeric">
+    <label for="pinInput">Admin PIN required</label>
+    <div class="hint">Enter the shared admin PIN to manage classes and students. This only guards against accidental edits. Anyone who can read the page source can find it.</div>
+    <input type="text" id="pinInput" placeholder="Enter PIN" inputmode="numeric" autocomplete="off">
     <button class="primary" id="pinSubmit">Unlock</button>
     <div id="pinError" style="color:var(--red); font-size:13px; margin-top:8px;"></div>
   </div>
   <div id="manageContent" style="display:none;">
     <div class="card">
-      <label>Official Roster</label>
-      <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Loads the Fall 2026 class rosters (<span id="rosterSummary"></span>). Replaces the current student list, including test data. Attendance and parent contacts are kept for students on the roster.</div>
+      <div class="label">Official roster</div>
+      <div class="hint">Loads the Fall 2026 class rosters (<span id="rosterSummary"></span>). Replaces the current student list, including test data. Attendance and parent contacts are kept for students on the roster.</div>
       <button class="secondary" id="loadRosterBtn">Load Official Fall 2026 Roster</button>
     </div>
     <div class="card">
-      <label>Add a new class</label>
+      <label for="newClassName">Add a new class</label>
       <div class="add-row">
         <input type="text" id="newClassName" placeholder="e.g. New class name">
         <button id="addClassBtn">Add</button>
@@ -219,44 +285,62 @@
       <input type="text" id="newClassTeacher" placeholder="Teacher name(s), optional" style="margin-top:8px; margin-bottom:0;">
     </div>
     <div class="card">
-      <label>Existing classes</label>
+      <div class="label">Existing classes</div>
       <div id="classList"></div>
     </div>
     <div class="card">
-      <label>Reset for pilot</label>
-      <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Deletes every student and all attendance and lesson history for every class. Class names stay. Cannot be undone, so export a CSV from Reports first. You'll be asked to type DELETE.</div>
-      <button class="secondary" id="resetBtn" style="border-color:var(--red); color:var(--red);">Clear All Students & Attendance</button>
-    </div>
-    <div class="card">
-      <label>Add student to</label>
+      <label for="manageClassSelect">Add student to</label>
       <select id="manageClassSelect"></select>
-      <div class="add-row" style="margin-top:8px;">
+      <div class="add-row">
         <input type="text" id="newStudentName" placeholder="Student name">
-        <input type="text" id="newStudentParent" placeholder="Parent contact (optional)" style="flex:1;">
+        <input type="text" id="newStudentParent" placeholder="Parent contact (optional)">
       </div>
       <button class="secondary" id="addStudentBtn">Add Student</button>
       <div id="studentManageList" style="margin-top:12px;"></div>
+    </div>
+    <div class="card">
+      <div class="label">Reset for pilot</div>
+      <div class="hint">Deletes every student and all attendance and lesson history for every class. Class names stay. Cannot be undone, so export a CSV from Reports first.</div>
+      <button class="secondary danger" id="resetBtn">Clear All Students & Attendance</button>
     </div>
   </div>
 </div>
 
 <div id="reports-tab" style="display:none;">
   <div class="card">
-    <label>Attendance by Class (year to date)</label>
+    <div class="label">Attendance by class (year to date)</div>
     <div id="reportsList"></div>
   </div>
   <div class="card">
-    <label>Backup / export</label>
-    <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Downloads every attendance mark and lesson note as a spreadsheet file (CSV). Do this regularly: it's your only backup.</div>
+    <div class="label">Backup / export</div>
+    <div class="hint">Saves every attendance mark and lesson note as a spreadsheet file (CSV). Do this regularly: it's your only backup.</div>
     <button class="secondary" id="exportBtn">Download CSV</button>
+    <div id="csvFallback" style="display:none; margin-top:12px;">
+      <div class="hint">Downloads aren't available here. Copy this text and paste it into a spreadsheet.</div>
+      <textarea id="csvText" readonly style="min-height:140px; font-family: ui-monospace, Menlo, monospace; font-size:12px;"></textarea>
+      <button class="secondary" id="copyCsvBtn">Copy CSV</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="modal-backdrop" id="confirmModal" style="display:none;">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <h2 id="confirmTitle"></h2>
+    <p id="confirmBody"></p>
+    <input type="text" id="confirmText" autocomplete="off" style="display:none;">
+    <div class="modal-actions">
+      <button class="secondary" id="confirmCancel">Cancel</button>
+      <button class="primary danger" id="confirmOk"></button>
+    </div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const STORAGE_KEY = 'sst-data-v1';
 const SCHEMA_VERSION = 2;
+const LOCAL_KEY = 'sst-data-v1';
 const SUNDAY_DATES = ['2026-09-27','2026-10-04','2026-10-18','2026-10-25','2026-11-01','2026-11-15','2026-12-06','2026-12-13'];
 
 const CLASS_NAMES = {
@@ -268,6 +352,7 @@ const CLASS_NAMES = {
   c6: 'GUHA 5th Grade',
   c7: 'YUVA 6th & 7th Grades'
 };
+const DEFAULT_TEACHERS = { c2: 'Mittal Patel, Falguni Patel & Payal Doshi' };
 
 let state = null;
 
@@ -275,9 +360,12 @@ function emptyState() {
   return { version: SCHEMA_VERSION, classes: [], students: [], attendance: {}, lessons: {}, sessionOverrides: {} };
 }
 
+function defaultClasses() {
+  return Object.keys(CLASS_NAMES).map(id => ({ id, name: CLASS_NAMES[id], teacher: DEFAULT_TEACHERS[id] || '' }));
+}
+
 function fmtDateOpt(d) {
-  const dt = new Date(d + 'T00:00:00');
-  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function populateDateSelects() {
@@ -296,36 +384,56 @@ function todayStr() {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
+function attKey(classId, date) { return classId + '_' + date; }
+function splitKey(key) { const i = key.lastIndexOf('_'); return [key.slice(0, i), key.slice(i + 1)]; }
+
 // ---------- Storage ----------
-// Shared storage when running as a Claude artifact (all teachers see the same data),
-// otherwise this browser's localStorage (this device only).
+// Shared mode: the page's db (every teacher sees the same data, live).
+//   school/classes          { version, list: [{id, name, teacher}] }
+//   school/students         { list: [{id, classId, name, grade, parent}] }
+//   sessions/<class>_<date> { classId, date, marks: {studentId: 'present'|'absent'|null}, lesson, override }
+// Each tap merges one student's mark into its session doc, so teachers marking at the
+// same time never overwrite each other.
+// Local mode (file opened outside Claude): this browser's localStorage only.
 
-const hasSharedStorage = !!(window.storage && typeof window.storage.get === 'function');
-let loadFailed = false;
+let db = null;
+let mode = 'loading';           // 'loading' | 'shared' | 'local' | 'error'
+let readOnly = false;
+let writeQueue = Promise.resolve();
 
-async function readRaw() {
-  if (!hasSharedStorage) return localStorage.getItem(STORAGE_KEY);
-  try {
-    const res = await window.storage.get(STORAGE_KEY, true);
-    return res && res.value != null ? res.value : null;
-  } catch (e) {
-    // get() throws both for a missing key and for real failures. list() tells them apart,
-    // so a network blip is never mistaken for "no data yet" and overwritten with defaults.
-    if (typeof window.storage.list !== 'function') return null;
-    const listed = await window.storage.list(STORAGE_KEY, true);
-    const keys = (listed && listed.keys) || [];
-    if (!keys.some(k => (typeof k === 'string' ? k : k.key) === STORAGE_KEY)) return null;
-    throw e;
-  }
+function queueWrite(fn) {
+  const run = async () => {
+    if (mode === 'error' || mode === 'loading') { showToast('Not saved: shared data is not connected. Reload the page.'); return false; }
+    if (readOnly) { showToast('You have view-only access, so changes are not saved'); return false; }
+    try {
+      await fn();
+      return true;
+    } catch (e) {
+      console.error('Save failed', e);
+      if (e && e.code === 'invalid_argument' && mode === 'shared') {
+        readOnly = true;
+        renderStorageBanner();
+        showToast('You have view-only access, so changes are not saved');
+      } else if (e && e.code === 'quota_exceeded') {
+        showToast('Storage is full. Export a CSV and clear old data.');
+      } else {
+        showToast('Save failed, check your connection and try again');
+      }
+      return false;
+    }
+  };
+  writeQueue = writeQueue.then(run, run);
+  return writeQueue;
 }
 
-async function writeRaw(str) {
-  if (hasSharedStorage) await window.storage.set(STORAGE_KEY, str, true);
-  else localStorage.setItem(STORAGE_KEY, str);
+// ----- local mode -----
+function readLocal() {
+  try { return localStorage.getItem(LOCAL_KEY); } catch (e) { return null; }
 }
+function writeLocal(s) { localStorage.setItem(LOCAL_KEY, JSON.stringify(s)); }
 
-// Brings any saved data up to the current schema. Add a new "if (v < N)" step for each
-// future data change instead of adding buttons that ask people to fix their own data.
+// Brings saved local data up to the current schema. Add a new "if (v < N)" step for
+// each future data change instead of adding buttons that ask people to fix their data.
 function migrate(s) {
   s.classes = s.classes || [];
   s.students = s.students || [];
@@ -333,127 +441,262 @@ function migrate(s) {
   s.lessons = s.lessons || {};
   s.sessionOverrides = s.sessionOverrides || {};
   const v = s.version || 1;
-  if (v < 2) {
-    s.classes.forEach(c => { if (CLASS_NAMES[c.id]) c.name = CLASS_NAMES[c.id]; });
-  }
+  if (v < 2) s.classes.forEach(c => { if (CLASS_NAMES[c.id]) c.name = CLASS_NAMES[c.id]; });
   s.version = SCHEMA_VERSION;
   return s;
 }
 
-async function loadState() {
+function initLocal() {
+  mode = 'local';
+  const raw = readLocal();
   try {
-    const raw = await readRaw();
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      const oldVersion = parsed.version || 1;
-      state = migrate(parsed);
-      if (oldVersion !== SCHEMA_VERSION) await writeRaw(JSON.stringify(state));
-    } else {
-      seedDefaults();
-      await writeRaw(JSON.stringify(state));
-    }
+    state = raw ? migrate(JSON.parse(raw)) : Object.assign(emptyState(), { classes: defaultClasses() });
   } catch (e) {
-    console.error('Load failed', e);
-    loadFailed = true;
-    seedDefaults();
+    state = Object.assign(emptyState(), { classes: defaultClasses() });
   }
+  try { writeLocal(state); } catch (e) { /* storage blocked; the page still works for this visit */ }
   renderStorageBanner();
+  renderAll();
 }
+
+// Re-read the latest local copy before each change so two open tabs don't erase each other.
+function mutateLocal(change) {
+  const raw = readLocal();
+  if (raw) state = migrate(JSON.parse(raw));
+  change(state);
+  writeLocal(state);
+}
+
+// ----- shared mode -----
+const shared = { classesLoaded: false, studentsLoaded: false, sessions: {} };
+
+function initShared() {
+  mode = 'shared';
+  state = emptyState();
+  const fail = (e) => {
+    console.error('Shared data error', e);
+    mode = 'error';
+    renderStorageBanner();
+  };
+  db.doc('school/classes').onSnapshot(snap => {
+    const d = snap.exists ? snap.data() : null;
+    let list = d && Array.isArray(d.list) ? d.list.map(c => Object.assign({}, c)) : [];
+    if (d && (d.version || 1) < 2) list.forEach(c => { if (CLASS_NAMES[c.id]) c.name = CLASS_NAMES[c.id]; });
+    state.classes = list;
+    shared.classesLoaded = true;
+    afterSharedChange();
+  }, fail);
+  db.doc('school/students').onSnapshot(snap => {
+    const d = snap.exists ? snap.data() : null;
+    state.students = d && Array.isArray(d.list) ? d.list.map(s => Object.assign({}, s)) : [];
+    shared.studentsLoaded = true;
+    afterSharedChange();
+  }, fail);
+  db.collection('sessions').onSnapshot(qs => {
+    const attendance = {}, lessons = {}, overrides = {};
+    qs.docs.forEach(doc => {
+      const d = doc.data() || {};
+      const key = doc.id;
+      const marks = {};
+      Object.entries(d.marks || {}).forEach(([sid, v]) => { if (v === 'present' || v === 'absent') marks[sid] = v; });
+      if (Object.keys(marks).length) attendance[key] = marks;
+      if (d.lesson) lessons[key] = d.lesson;
+      if (d.override) overrides[key] = d.override;
+    });
+    state.attendance = attendance;
+    state.lessons = lessons;
+    state.sessionOverrides = overrides;
+    afterSharedChange();
+  }, fail);
+}
+
+function afterSharedChange() {
+  if (mode === 'error') return;
+  renderStorageBanner();
+  renderAll();
+  if (document.getElementById('reports-tab').style.display !== 'none') renderReports();
+}
+
+async function writeSession(key, patch) {
+  const ref = db.doc('sessions/' + key);
+  try {
+    await ref.update(patch);
+  } catch (e) {
+    if (!e || e.code !== 'invalid_argument') throw e;
+    // update() rejects when the doc doesn't exist yet: create it.
+    const snap = await ref.get();
+    if (snap.exists) throw e;
+    const [classId, date] = splitKey(key);
+    await ref.set(Object.assign({ classId, date, marks: {}, lesson: '', override: '' }, patch));
+  }
+}
+
+async function editSharedList(path, change) {
+  const ref = db.doc(path);
+  const snap = await ref.get();
+  const d = snap.exists ? snap.data() : {};
+  const list = Array.isArray(d.list) ? d.list.map(x => Object.assign({}, x)) : [];
+  const out = { list: change(list) };
+  if (path === 'school/classes') out.version = SCHEMA_VERSION;
+  await ref.set(out);
+}
+
+// ----- one API for both modes -----
+const store = {
+  setMark(key, sid, status) {
+    return queueWrite(async () => {
+      if (mode === 'shared') await writeSession(key, { marks: { [sid]: status || null } });
+      else mutateLocal(s => {
+        if (!s.attendance[key]) s.attendance[key] = {};
+        if (status) s.attendance[key][sid] = status; else delete s.attendance[key][sid];
+      });
+    });
+  },
+  setLesson(key, text) {
+    return queueWrite(async () => {
+      if (mode === 'shared') await writeSession(key, { lesson: text.trim() ? text : '' });
+      else mutateLocal(s => { if (text.trim()) s.lessons[key] = text; else delete s.lessons[key]; });
+    });
+  },
+  setOverride(key, val) {
+    return queueWrite(async () => {
+      if (mode === 'shared') await writeSession(key, { override: val });
+      else mutateLocal(s => { if (val) s.sessionOverrides[key] = val; else delete s.sessionOverrides[key]; });
+    });
+  },
+  editClasses(change) {
+    return queueWrite(async () => {
+      if (mode === 'shared') await editSharedList('school/classes', change);
+      else mutateLocal(s => { s.classes = change(s.classes); });
+    });
+  },
+  editStudents(change) {
+    return queueWrite(async () => {
+      if (mode === 'shared') await editSharedList('school/students', change);
+      else mutateLocal(s => { s.students = change(s.students); });
+    });
+  },
+  deleteSessions(match) {
+    return queueWrite(async () => {
+      if (mode === 'shared') {
+        const qs = await db.collection('sessions').get();
+        for (const doc of qs.docs) if (match(doc.id)) await db.doc('sessions/' + doc.id).delete();
+      } else mutateLocal(s => {
+        ['attendance', 'lessons', 'sessionOverrides'].forEach(f => Object.keys(s[f]).forEach(k => { if (match(k)) delete s[f][k]; }));
+      });
+    });
+  }
+};
 
 function renderStorageBanner() {
   const el = document.getElementById('storageBanner');
-  if (loadFailed) {
-    el.className = 'banner error';
-    el.textContent = "Couldn't load saved data. Saving is turned off so existing records aren't overwritten. Check your connection and reload the page.";
-    el.style.display = 'block';
-  } else if (!hasSharedStorage) {
-    el.className = 'banner warn';
-    el.textContent = 'Saved on this device only. Other teachers will not see these records, and clearing browser data deletes them. Export a CSV from Reports regularly.';
-    el.style.display = 'block';
-  } else {
-    el.style.display = 'none';
-  }
+  const set = (cls, text) => { el.className = 'banner ' + cls; el.textContent = text; el.style.display = 'block'; };
+  if (mode === 'loading') set('info', 'Connecting to shared data…');
+  else if (mode === 'error') set('error', "Couldn't reach the shared data. Saving is off so nothing gets overwritten. Check your connection and reload the page.");
+  else if (readOnly) set('warn', 'You have view-only access. Ask the owner to share this page with you as a Contributor to mark attendance.');
+  else if (mode === 'local') set('warn', 'Saved on this device only. Other teachers will not see these records, and clearing browser data deletes them. Export a CSV from Reports regularly.');
+  else if (shared.classesLoaded && state.classes.length === 0) set('info', 'No classes yet. Open Manage and load the official roster to get started.');
+  else el.style.display = 'none';
 }
 
-function seedDefaults() {
-  state = emptyState();
-  state.classes = Object.keys(CLASS_NAMES).map(id => ({ id, name: CLASS_NAMES[id], teacher: '' }));
-  state.classes.find(c => c.id === 'c2').teacher = 'Mittal Patel, Falguni Patel & Payal Doshi';
-}
-
-// Every change goes through here: re-read the latest saved data, apply the change, write it back.
-// Several teachers save at the same time on Sunday morning. Writing a stale copy of the whole
-// state would silently erase another class's attendance.
-let saveQueue = Promise.resolve(true);
-function mutate(change) {
-  const run = async () => {
-    if (loadFailed) {
-      showToast('Not saved: data failed to load. Reload the page.');
-      return false;
-    }
-    try {
-      const raw = await readRaw();
-      if (raw) state = migrate(JSON.parse(raw));
-      change(state);
-      await writeRaw(JSON.stringify(state));
-      return true;
-    } catch (e) {
-      console.error('Save failed', e);
-      showToast('Save failed, check your connection and try again');
-      return false;
-    }
-  };
-  saveQueue = saveQueue.then(run, run);
-  return saveQueue;
-}
+// ---------- UI helpers ----------
 
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(showToast.timer);
-  showToast.timer = setTimeout(() => t.classList.remove('show'), 2200);
+  showToast.timer = setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-function attKey(classId, date) { return classId + '_' + date; }
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : s;
+  return d.innerHTML;
+}
+
+// In-page confirmation (the viewer blocks confirm() and prompt()).
+function askConfirm({ title, body, okLabel, requireText }) {
+  return new Promise(resolve => {
+    const modal = document.getElementById('confirmModal');
+    const ok = document.getElementById('confirmOk');
+    const cancel = document.getElementById('confirmCancel');
+    const input = document.getElementById('confirmText');
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmBody').textContent = body + (requireText ? '\n\nType ' + requireText + ' to confirm.' : '');
+    ok.textContent = okLabel;
+    input.value = '';
+    input.style.display = requireText ? 'block' : 'none';
+    input.placeholder = requireText || '';
+    ok.disabled = !!requireText;
+    const onInput = () => { ok.disabled = input.value.trim() !== requireText; };
+    const close = (result) => {
+      modal.style.display = 'none';
+      ok.removeEventListener('click', onOk);
+      cancel.removeEventListener('click', onCancel);
+      input.removeEventListener('input', onInput);
+      document.removeEventListener('keydown', onKey);
+      resolve(result);
+    };
+    const onOk = () => close(true);
+    const onCancel = () => close(false);
+    const onKey = (e) => { if (e.key === 'Escape') close(false); };
+    ok.addEventListener('click', onOk);
+    cancel.addEventListener('click', onCancel);
+    input.addEventListener('input', onInput);
+    document.addEventListener('keydown', onKey);
+    modal.style.display = 'flex';
+    (requireText ? input : cancel).focus();
+  });
+}
+
+async function copyText(text, fallbackEl) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    if (fallbackEl) {
+      const range = document.createRange();
+      range.selectNodeContents(fallbackEl);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      if (fallbackEl.select) fallbackEl.select();
+    }
+    return false;
+  }
+}
 
 function getClassDates(classId) {
   const dates = new Set();
   [state.attendance, state.lessons].forEach(obj => {
-    Object.keys(obj).forEach(k => {
-      if (k.startsWith(classId + '_')) dates.add(k.slice(classId.length + 1));
-    });
+    Object.keys(obj).forEach(k => { if (k.startsWith(classId + '_')) dates.add(k.slice(classId.length + 1)); });
   });
   return Array.from(dates).sort();
 }
 
 // Class number comes from the fixed calendar, so it doesn't shift when an earlier week is logged late.
-function getSessionNumber(date) {
-  return SUNDAY_DATES.indexOf(date) + 1;
-}
+function getSessionNumber(date) { return SUNDAY_DATES.indexOf(date) + 1; }
 
 function getEffectiveSession(classId, date) {
   const override = state.sessionOverrides[attKey(classId, date)];
-  if (override !== undefined && override !== '') return override;
-  return String(getSessionNumber(date));
+  return override ? override : String(getSessionNumber(date));
+}
+
+function currentKey() {
+  return attKey(document.getElementById('classSelect').value, document.getElementById('dateSelect').value);
 }
 
 // ---------- Rendering ----------
 
 function renderClassSelects() {
-  const selects = ['classSelect', 'msgClassSelect', 'manageClassSelect'];
-  selects.forEach(id => {
+  ['classSelect', 'msgClassSelect', 'manageClassSelect'].forEach(id => {
     const sel = document.getElementById(id);
     const prev = sel.value;
-    sel.innerHTML = state.classes.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+    const html = state.classes.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('');
+    if (sel.innerHTML !== html) sel.innerHTML = html;
     if (prev && state.classes.find(c => c.id === prev)) sel.value = prev;
   });
-}
-
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
 }
 
 function renderStudentList() {
@@ -462,14 +705,14 @@ function renderStudentList() {
   const list = document.getElementById('studentList');
   const noStudents = document.getElementById('noStudents');
   const students = state.students.filter(s => s.classId === classId);
+  const key = attKey(classId, date);
 
   const sessionEl = document.getElementById('sessionLabel');
   const overrideInput = document.getElementById('sessionOverride');
   if (classId && date) {
     const auto = getSessionNumber(date);
     sessionEl.textContent = 'Auto-calculated: Class ' + auto;
-    const key = attKey(classId, date);
-    overrideInput.value = state.sessionOverrides[key] !== undefined ? state.sessionOverrides[key] : '';
+    if (document.activeElement !== overrideInput) overrideInput.value = state.sessionOverrides[key] || '';
     overrideInput.placeholder = 'Auto: ' + auto + ' (edit to override)';
   } else {
     sessionEl.textContent = '';
@@ -478,65 +721,82 @@ function renderStudentList() {
 
   if (students.length === 0) {
     list.innerHTML = '';
+    list.dataset.for = '';
     noStudents.style.display = 'block';
+    renderTally();
     return;
   }
   noStudents.style.display = 'none';
 
-
-  const key = attKey(classId, date);
-  const dayAtt = state.attendance[key] || {};
-
-  list.innerHTML = students.map(s => {
-    const status = dayAtt[s.id];
-    return `
+  // Only rebuild rows when the class or roster changed; otherwise just repaint states.
+  const signature = key + '|' + students.map(s => s.id + ':' + s.name).join(',');
+  if (list.dataset.for !== signature) {
+    list.dataset.for = signature;
+    list.innerHTML = students.map(s => `
       <div class="student-row">
         <div class="name">${escapeHtml(s.name)}</div>
         <div class="att-btns">
-          <button class="att-btn present ${status === 'present' ? 'on' : ''}" data-student="${s.id}" data-status="present">Present</button>
-          <button class="att-btn absent ${status === 'absent' ? 'on' : ''}" data-student="${s.id}" data-status="absent">Absent</button>
+          <button class="att-btn present" data-student="${escapeHtml(s.id)}" data-status="present">Present</button>
+          <button class="att-btn absent" data-student="${escapeHtml(s.id)}" data-status="absent">Absent</button>
         </div>
-      </div>`;
-  }).join('');
-
-  list.querySelectorAll('.att-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const sid = btn.dataset.student;
-      const current = (state.attendance[key] || {})[sid];
-      const next = current === btn.dataset.status ? null : btn.dataset.status;
-      applyMark(state, key, sid, next);
-      renderAttendanceButtons();
-      const ok = await mutate(s => applyMark(s, key, sid, next));
-      renderAttendanceButtons();
-      if (!ok) renderStudentList();
+      </div>`).join('');
+    list.querySelectorAll('.att-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const k = currentKey();
+        const sid = btn.dataset.student;
+        const current = (state.attendance[k] || {})[sid];
+        const next = current === btn.dataset.status ? null : btn.dataset.status;
+        const before = current || null;
+        applyMark(k, sid, next);
+        renderAttendanceButtons();
+        const ok = await store.setMark(k, sid, next);
+        if (!ok) { applyMark(k, sid, before); renderAttendanceButtons(); }
+      });
     });
-  });
+  }
+  renderAttendanceButtons();
 }
 
-function applyMark(s, key, sid, status) {
-  if (!s.attendance[key]) s.attendance[key] = {};
-  if (status) s.attendance[key][sid] = status;
-  else delete s.attendance[key][sid];
+function applyMark(key, sid, status) {
+  if (!state.attendance[key]) state.attendance[key] = {};
+  if (status) state.attendance[key][sid] = status; else delete state.attendance[key][sid];
 }
 
-// Repaints button states only, so a slow save never wipes the note being typed.
 function renderAttendanceButtons() {
-  const key = attKey(document.getElementById('classSelect').value, document.getElementById('dateSelect').value);
-  const dayAtt = state.attendance[key] || {};
+  const dayAtt = state.attendance[currentKey()] || {};
   document.querySelectorAll('#studentList .att-btn').forEach(btn => {
-    btn.classList.toggle('on', dayAtt[btn.dataset.student] === btn.dataset.status);
+    const on = dayAtt[btn.dataset.student] === btn.dataset.status;
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
+  renderTally();
 }
 
+function renderTally() {
+  const classId = document.getElementById('classSelect').value;
+  const students = state.students.filter(s => s.classId === classId);
+  const dayAtt = state.attendance[currentKey()] || {};
+  const p = students.filter(s => dayAtt[s.id] === 'present').length;
+  const a = students.filter(s => dayAtt[s.id] === 'absent').length;
+  document.getElementById('tally').innerHTML = students.length
+    ? `<span><b>${p}</b> present</span><span><b>${a}</b> absent</span><span><b>${students.length - p - a}</b> not marked</span>`
+    : '';
+}
+
+let topicDirty = false;
 function loadTopic() {
-  const key = attKey(document.getElementById('classSelect').value, document.getElementById('dateSelect').value);
+  const key = currentKey();
   const input = document.getElementById('topicInput');
+  // Never overwrite a note someone is typing because another teacher saved something.
+  if (input.dataset.key === key && topicDirty) return;
   input.dataset.key = key;
   input.value = state.lessons[key] || '';
+  topicDirty = false;
 }
 
 function renderClassManageList() {
   const list = document.getElementById('classList');
+  if (list.contains(document.activeElement)) return;
   if (state.classes.length === 0) {
     list.innerHTML = '<div class="empty">No classes yet.</div>';
     return;
@@ -547,32 +807,32 @@ function renderClassManageList() {
       <div style="padding:10px 0; border-bottom:1px solid var(--border);">
         <div class="student-row" style="padding:0 0 6px 0; border:none;">
           <div class="name">${escapeHtml(c.name)} <span style="color:var(--muted);font-weight:400;">(${count} students)</span></div>
-          <div class="remove-x" data-class="${c.id}">Remove</div>
+          <button class="ghost" data-class="${escapeHtml(c.id)}">Remove</button>
         </div>
-        <input type="text" class="teacher-input" data-class="${c.id}" placeholder="Teacher name(s)" value="${escapeHtml(c.teacher || '')}" style="margin-bottom:0; font-size:13px; padding:8px;">
+        <input type="text" class="teacher-input" data-class="${escapeHtml(c.id)}" placeholder="Teacher name(s)" value="${escapeHtml(c.teacher || '')}" style="margin-bottom:0; font-size:13px; padding:8px;" aria-label="Teacher for ${escapeHtml(c.name)}">
       </div>`;
   }).join('');
-  list.querySelectorAll('.remove-x').forEach(el => {
+  list.querySelectorAll('.ghost').forEach(el => {
     el.addEventListener('click', async () => {
       const id = el.dataset.class;
-      if (!confirm('Remove this class and all its students/attendance data?')) return;
-      await mutate(s => {
-        s.classes = s.classes.filter(c => c.id !== id);
-        s.students = s.students.filter(st => st.classId !== id);
-        ['attendance', 'lessons', 'sessionOverrides'].forEach(field => {
-          Object.keys(s[field]).forEach(k => { if (k.startsWith(id + '_')) delete s[field][k]; });
-        });
+      const cls = state.classes.find(c => c.id === id);
+      const yes = await askConfirm({
+        title: 'Remove ' + (cls ? cls.name : 'this class') + '?',
+        body: 'This deletes the class, its students, and all of its attendance and lesson notes.',
+        okLabel: 'Remove class'
       });
-      renderAll();
+      if (!yes) return;
+      await store.editClasses(list => list.filter(c => c.id !== id));
+      await store.editStudents(list => list.filter(s => s.classId !== id));
+      await store.deleteSessions(k => k.startsWith(id + '_'));
+      if (mode === 'local') renderAll();
+      showToast('Class removed');
     });
   });
   list.querySelectorAll('.teacher-input').forEach(input => {
     input.addEventListener('change', async () => {
       const teacher = input.value.trim();
-      const ok = await mutate(s => {
-        const cls = s.classes.find(c => c.id === input.dataset.class);
-        if (cls) cls.teacher = teacher;
-      });
+      const ok = await store.editClasses(list => list.map(c => c.id === input.dataset.class ? Object.assign(c, { teacher }) : c));
       if (ok) showToast('Teacher name saved');
     });
   });
@@ -589,17 +849,25 @@ function renderStudentManageList() {
   list.innerHTML = students.map(s => `
     <div class="student-row">
       <div class="name">${escapeHtml(s.name)}${s.parent ? ` <span style="color:var(--muted);font-weight:400;font-size:13px;">(${escapeHtml(s.parent)})</span>` : ''}</div>
-      <div class="remove-x" data-student="${s.id}">Remove</div>
+      <button class="ghost" data-student="${escapeHtml(s.id)}">Remove</button>
     </div>`).join('');
-  list.querySelectorAll('.remove-x').forEach(el => {
+  list.querySelectorAll('.ghost').forEach(el => {
     el.addEventListener('click', async () => {
       const st = state.students.find(x => x.id === el.dataset.student);
-      if (!confirm('Remove ' + (st ? st.name : 'this student') + '?')) return;
-      await mutate(s => { s.students = s.students.filter(x => x.id !== el.dataset.student); });
-      renderStudentManageList();
-      renderClassManageList();
+      const yes = await askConfirm({
+        title: 'Remove ' + (st ? st.name : 'this student') + '?',
+        body: 'Their past attendance marks stay in the history but will no longer show in reports.',
+        okLabel: 'Remove student'
+      });
+      if (!yes) return;
+      const ok = await store.editStudents(list => list.filter(x => x.id !== el.dataset.student));
+      if (ok && mode === 'local') renderAll();
     });
   });
+}
+
+function pctColor(pct) {
+  return pct === null ? 'var(--muted)' : pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
 }
 
 function renderReports() {
@@ -608,74 +876,50 @@ function renderReports() {
     list.innerHTML = '<div class="empty">No classes yet.</div>';
     return;
   }
+  const open = new Set(Array.from(list.querySelectorAll('[data-students]')).filter(el => el.style.display !== 'none').map(el => el.dataset.students));
 
   list.innerHTML = state.classes.map(c => {
     const dates = getClassDates(c.id);
     const students = state.students.filter(s => s.classId === c.id);
-
     if (dates.length === 0 || students.length === 0) {
-      return `
-        <div style="padding:12px 0; border-bottom:1px solid var(--border);">
-          <div class="name">${escapeHtml(c.name)}</div>
-          <div style="font-size:13px; color:var(--muted);">No attendance recorded yet</div>
-        </div>`;
+      return `<div class="report-row"><div class="name">${escapeHtml(c.name)}</div><div class="meta">No attendance recorded yet</div></div>`;
     }
-
-    let presentCount = 0;
-    let totalMarks = 0;
-    const studentStats = students.map(s => ({ id: s.id, name: s.name, present: 0, total: 0 }));
-    const statsById = {};
-    studentStats.forEach(st => statsById[st.id] = st);
-
+    let presentCount = 0, totalMarks = 0;
+    const stats = students.map(s => ({ name: s.name, id: s.id, present: 0, total: 0 }));
     dates.forEach(date => {
-      const key = attKey(c.id, date);
-      const dayAtt = state.attendance[key] || {};
-      students.forEach(s => {
-        const status = dayAtt[s.id];
+      const dayAtt = state.attendance[attKey(c.id, date)] || {};
+      stats.forEach(st => {
+        const status = dayAtt[st.id];
         if (status === 'present' || status === 'absent') {
-          totalMarks++;
-          statsById[s.id].total++;
-          if (status === 'present') {
-            presentCount++;
-            statsById[s.id].present++;
-          }
+          totalMarks++; st.total++;
+          if (status === 'present') { presentCount++; st.present++; }
         }
       });
     });
-
     const pct = totalMarks > 0 ? Math.round((presentCount / totalMarks) * 100) : null;
-    const barColor = pct === null ? 'var(--muted)' : pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--saffron)' : 'var(--red)';
-
-    const studentRows = studentStats.map(st => {
+    const rows = stats.map(st => {
       const sPct = st.total > 0 ? Math.round((st.present / st.total) * 100) : null;
-      const sColor = sPct === null ? 'var(--muted)' : sPct >= 80 ? 'var(--green)' : sPct >= 60 ? 'var(--saffron)' : 'var(--red)';
-      return `
-        <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px;">
-          <div>${escapeHtml(st.name)}</div>
-          <div style="color:${sColor}; font-weight:600;">${sPct === null ? 'no data' : sPct + '% (' + st.present + '/' + st.total + ')'}</div>
-        </div>`;
+      return `<div class="stu-stat"><div>${escapeHtml(st.name)}</div><div style="color:${pctColor(sPct)}; font-weight:600;">${sPct === null ? 'no data' : sPct + '% (' + st.present + '/' + st.total + ')'}</div></div>`;
     }).join('');
-
+    const isOpen = open.has(c.id);
     return `
-      <div style="padding:12px 0; border-bottom:1px solid var(--border);">
-        <div class="student-row" style="padding:0 0 6px 0; border:none; cursor:pointer;" data-toggle="${c.id}">
-          <div class="name">${escapeHtml(c.name)} <span style="font-size:11px; color:var(--muted);">▾ students</span></div>
-          <div style="font-weight:700; color:${barColor};">${pct === null ? '—' : pct + '%'}</div>
-        </div>
-        <div style="font-size:12px; color:var(--muted);">${dates.length} session${dates.length === 1 ? '' : 's'} logged · ${students.length} student${students.length === 1 ? '' : 's'}</div>
-        <div style="background:var(--border); border-radius:4px; height:6px; margin-top:6px; overflow:hidden;">
-          <div style="background:${barColor}; height:100%; width:${pct || 0}%;"></div>
-        </div>
-        <div id="students-${c.id}" style="display:none; margin-top:10px; padding-top:8px; border-top:1px dashed var(--border);">
-          ${studentRows || '<div class="empty">No students added yet</div>'}
-        </div>
+      <div class="report-row">
+        <button class="report-head" data-toggle="${escapeHtml(c.id)}" aria-expanded="${isOpen}">
+          <span class="name">${escapeHtml(c.name)} <span style="font-size:11px; color:var(--muted);">▾ students</span></span>
+          <span class="pct" style="color:${pctColor(pct)};">${pct === null ? 'n/a' : pct + '%'}</span>
+        </button>
+        <div class="meta">${dates.length} session${dates.length === 1 ? '' : 's'} logged · ${students.length} student${students.length === 1 ? '' : 's'}</div>
+        <div class="bar"><div style="background:${pctColor(pct)}; width:${pct || 0}%;"></div></div>
+        <div data-students="${escapeHtml(c.id)}" style="display:${isOpen ? 'block' : 'none'}; margin-top:10px; padding-top:8px; border-top:1px dashed var(--border);">${rows}</div>
       </div>`;
   }).join('');
 
   list.querySelectorAll('[data-toggle]').forEach(el => {
     el.addEventListener('click', () => {
-      const target = document.getElementById('students-' + el.dataset.toggle);
-      target.style.display = target.style.display === 'none' ? 'block' : 'none';
+      const target = list.querySelector('[data-students="' + el.dataset.toggle + '"]');
+      const show = target.style.display === 'none';
+      target.style.display = show ? 'block' : 'none';
+      el.setAttribute('aria-expanded', show);
     });
   });
 }
@@ -691,12 +935,9 @@ function renderAll() {
 // ---------- PIN gate ----------
 
 const ADMIN_PIN = '1421'; // temple street number, easy to remember, change as needed. Not real security.
-let unlocked = false;
 
 document.getElementById('pinSubmit').addEventListener('click', () => {
-  const val = document.getElementById('pinInput').value.trim();
-  if (val === ADMIN_PIN) {
-    unlocked = true;
+  if (document.getElementById('pinInput').value.trim() === ADMIN_PIN) {
     document.getElementById('pinGate').style.display = 'none';
     document.getElementById('manageContent').style.display = 'block';
     document.getElementById('pinError').textContent = '';
@@ -704,7 +945,6 @@ document.getElementById('pinSubmit').addEventListener('click', () => {
     document.getElementById('pinError').textContent = 'Incorrect PIN';
   }
 });
-
 document.getElementById('pinInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') document.getElementById('pinSubmit').click();
 });
@@ -713,8 +953,7 @@ document.getElementById('pinInput').addEventListener('keydown', (e) => {
 
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
     ['attendance', 'message', 'manage', 'reports'].forEach(name => {
       document.getElementById(name + '-tab').style.display = name === tab.dataset.tab ? 'block' : 'none';
     });
@@ -725,46 +964,46 @@ document.querySelectorAll('.tab').forEach(tab => {
 // ---------- Attendance tab ----------
 
 function onAttendanceSelection() {
-  saveTopic(true); // captures the old class/date key and text before the reload below
+  saveTopic(true); // captures the old class/date and text before the view switches
+  topicDirty = false;
   renderStudentList();
   loadTopic();
 }
 document.getElementById('classSelect').addEventListener('change', onAttendanceSelection);
 document.getElementById('dateSelect').addEventListener('change', onAttendanceSelection);
+
 document.getElementById('sessionOverride').addEventListener('change', async () => {
   const classId = document.getElementById('classSelect').value;
   const date = document.getElementById('dateSelect').value;
   if (!classId || !date) return;
   const key = attKey(classId, date);
   const val = document.getElementById('sessionOverride').value.trim();
-  const ok = await mutate(s => {
-    if (val === '') delete s.sessionOverrides[key];
-    else s.sessionOverrides[key] = val;
-  });
-  if (ok) showToast(val === '' ? 'Reverted to auto-calculated' : 'Class number overridden');
+  if (val) state.sessionOverrides[key] = val; else delete state.sessionOverrides[key];
+  const ok = await store.setOverride(key, val);
+  if (ok) showToast(val === '' ? 'Back to the calendar number' : 'Class number changed');
 });
 
 // Saves under the class/date the note was loaded for, so switching the dropdown
 // right after typing can't file the note under the wrong week.
+let topicTimer;
 async function saveTopic(quiet) {
   clearTimeout(topicTimer);
   const input = document.getElementById('topicInput');
   const key = input.dataset.key;
-  if (!key) return;
+  if (!key || key.startsWith('_')) return;
   const text = input.value;
-  if ((state.lessons[key] || '') === text && quiet) return;
-  const ok = await mutate(s => {
-    if (text.trim()) s.lessons[key] = text;
-    else delete s.lessons[key];
-  });
+  if (quiet && (state.lessons[key] || '') === text) { topicDirty = false; return; }
+  if (text.trim()) state.lessons[key] = text; else delete state.lessons[key];
+  const ok = await store.setLesson(key, text);
   if (!ok) return;
+  if (input.dataset.key === key && input.value === text) topicDirty = false;
   const statusEl = document.getElementById('saveStatus');
   statusEl.textContent = 'Notes saved ✓';
   setTimeout(() => statusEl.textContent = '', 2000);
   if (!quiet) showToast('Notes saved');
 }
-let topicTimer;
 document.getElementById('topicInput').addEventListener('input', () => {
+  topicDirty = true;
   clearTimeout(topicTimer);
   topicTimer = setTimeout(() => saveTopic(true), 1500);
 });
@@ -781,16 +1020,15 @@ document.getElementById('genMsgBtn').addEventListener('click', () => {
   const dayAtt = state.attendance[key] || {};
   const topic = state.lessons[key] || '(not recorded)';
   const students = state.students.filter(s => s.classId === classId);
-
   const present = students.filter(s => dayAtt[s.id] === 'present').map(s => s.name);
   const absent = students.filter(s => dayAtt[s.id] === 'absent').map(s => s.name);
   const includeNames = document.getElementById('msgIncludeNames').checked;
+  const unmarked = students.length - present.length - absent.length;
 
   const dateFmt = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '(no date selected)';
   const sessionNum = classId && date ? getEffectiveSession(classId, date) : '';
-  const unmarked = students.length - present.length - absent.length;
 
-  let msg = `🪔 ${cls ? cls.name : ''} — Sunday School Update\nClass ${sessionNum} · ${dateFmt}\n\n`;
+  let msg = `🪔 ${cls ? cls.name : ''} · Sunday School Update\nClass ${sessionNum} · ${dateFmt}\n\n`;
   msg += `Today we covered:\n${topic}\n\n`;
   if (!present.length && !absent.length) {
     msg += `(No attendance recorded for this date yet)\n`;
@@ -800,20 +1038,17 @@ document.getElementById('genMsgBtn').addEventListener('click', () => {
   } else {
     msg += `Attendance: ${present.length} of ${students.length} students present\n`;
   }
-  if (unmarked > 0) showToast(unmarked + ' student' + (unmarked === 1 ? '' : 's') + ' not marked yet');
   msg += `\nHari Om 🙏`;
+  if (unmarked > 0) showToast(unmarked + ' student' + (unmarked === 1 ? '' : 's') + ' not marked yet');
 
   document.getElementById('msgOutput').textContent = msg;
   document.getElementById('msgOutputCard').style.display = 'block';
 });
 
-document.getElementById('copyBtn').addEventListener('click', () => {
-  const text = document.getElementById('msgOutput').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    showToast('Copied! Paste into WhatsApp');
-  }).catch(() => {
-    showToast('Copy failed, select text manually');
-  });
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const el = document.getElementById('msgOutput');
+  const ok = await copyText(el.textContent, el);
+  showToast(ok ? 'Copied. Paste it into WhatsApp' : 'Copy was blocked. The text is selected, copy it manually');
 });
 
 // ---------- Manage tab ----------
@@ -824,10 +1059,10 @@ document.getElementById('addClassBtn').addEventListener('click', async () => {
   const name = input.value.trim();
   if (!name) return;
   const cls = { id: 'c' + Date.now(), name, teacher: teacherInput.value.trim() };
-  if (!await mutate(s => { s.classes.push(cls); })) return;
+  if (!await store.editClasses(list => list.concat([cls]))) return;
   input.value = '';
   teacherInput.value = '';
-  renderAll();
+  if (mode === 'local') renderAll();
   showToast('Class added');
 });
 
@@ -865,38 +1100,61 @@ const ROSTER_COUNT = Object.values(OFFICIAL_ROSTER).reduce((n, list) => n + list
 const ROSTER_SUMMARY = Object.keys(OFFICIAL_ROSTER).length + ' classes, ' + ROSTER_COUNT + ' students';
 document.getElementById('rosterSummary').textContent = ROSTER_SUMMARY;
 
+function rosterId(classId, name) {
+  return 's_' + classId + '_' + name.replace(/\s+/g, '_').toLowerCase();
+}
+
 document.getElementById('loadRosterBtn').addEventListener('click', async () => {
-  if (!confirm('This replaces all current students with the Fall 2026 roster (' + ROSTER_SUMMARY + '). Students you added by hand will be removed. Continue?')) return;
-  const ok = await mutate(s => {
-    const existing = {};
-    s.students.forEach(st => existing[st.id] = st);
-    const newStudents = [];
+  const yes = await askConfirm({
+    title: 'Load the Fall 2026 roster?',
+    body: 'This replaces all current students with the official roster (' + ROSTER_SUMMARY + '). Students you added by hand will be removed. Attendance already marked for roster students is kept.',
+    okLabel: 'Load roster'
+  });
+  if (!yes) return;
+  // Make sure the 7 official classes exist with the right names; keep any extra classes and teacher names.
+  const classesOk = await store.editClasses(list => {
+    Object.keys(CLASS_NAMES).forEach(id => {
+      const found = list.find(c => c.id === id);
+      if (found) found.name = CLASS_NAMES[id];
+      else list.push({ id, name: CLASS_NAMES[id], teacher: DEFAULT_TEACHERS[id] || '' });
+    });
+    const order = Object.keys(CLASS_NAMES);
+    return list.sort((a, b) => (order.indexOf(a.id) + 1 || 99) - (order.indexOf(b.id) + 1 || 99));
+  });
+  if (!classesOk) return;
+  const ok = await store.editStudents(existing => {
+    const byId = {};
+    existing.forEach(st => byId[st.id] = st);
+    const out = [];
     Object.keys(OFFICIAL_ROSTER).forEach(classId => {
       OFFICIAL_ROSTER[classId].forEach(([name, grade]) => {
-        const id = 's_' + classId + '_' + name.replace(/\s+/g, '_').toLowerCase();
-        newStudents.push({ id, classId, name, grade, parent: existing[id] ? existing[id].parent || '' : '' });
+        const id = rosterId(classId, name);
+        out.push({ id, classId, name, grade, parent: byId[id] ? byId[id].parent || '' : '' });
       });
     });
-    s.students = newStudents;
+    return out;
   });
   if (!ok) return;
-  renderAll();
+  if (mode === 'local') renderAll();
   showToast('Roster loaded: ' + ROSTER_SUMMARY);
 });
 
 document.getElementById('resetBtn').addEventListener('click', async () => {
-  const typed = prompt('This deletes every student and ALL attendance and lesson history, for every teacher. It cannot be undone.\n\nType DELETE to confirm.');
-  if (typed !== 'DELETE') { if (typed !== null) showToast('Not deleted'); return; }
-  const ok = await mutate(s => {
-    s.students = [];
-    s.attendance = {};
-    s.lessons = {};
-    s.sessionOverrides = {};
+  const yes = await askConfirm({
+    title: 'Delete all students and history?',
+    body: 'This deletes every student and ALL attendance and lesson notes, for every teacher. It cannot be undone.',
+    okLabel: 'Delete everything',
+    requireText: 'DELETE'
   });
+  if (!yes) return;
+  const ok = await store.editStudents(() => []);
   if (!ok) return;
-  renderAll();
+  await store.deleteSessions(() => true);
+  if (mode === 'local') renderAll();
   showToast('All students and history cleared');
 });
+
+document.getElementById('manageClassSelect').addEventListener('change', renderStudentManageList);
 
 document.getElementById('addStudentBtn').addEventListener('click', async () => {
   const classId = document.getElementById('manageClassSelect').value;
@@ -905,11 +1163,10 @@ document.getElementById('addStudentBtn').addEventListener('click', async () => {
   const name = nameInput.value.trim();
   if (!name || !classId) return;
   const student = { id: 's' + Date.now(), classId, name, parent: parentInput.value.trim() };
-  if (!await mutate(s => { s.students.push(student); })) return;
+  if (!await store.editStudents(list => list.concat([student]))) return;
   nameInput.value = '';
   parentInput.value = '';
-  renderStudentManageList();
-  renderClassManageList();
+  if (mode === 'local') renderAll();
   showToast('Student added');
 });
 
@@ -920,7 +1177,7 @@ function csvCell(v) {
   return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
 }
 
-document.getElementById('exportBtn').addEventListener('click', () => {
+function buildCsv() {
   const rows = [['Class', 'Date', 'Class #', 'Student', 'Grade', 'Status', 'Lesson notes']];
   state.classes.forEach(c => {
     const students = state.students.filter(s => s.classId === c.id);
@@ -928,20 +1185,52 @@ document.getElementById('exportBtn').addEventListener('click', () => {
       const key = attKey(c.id, date);
       const dayAtt = state.attendance[key] || {};
       const lesson = state.lessons[key] || '';
-      students.forEach(s => {
-        rows.push([c.name, date, getEffectiveSession(c.id, date), s.name, s.grade || '', dayAtt[s.id] || 'not marked', lesson]);
-      });
+      students.forEach(s => rows.push([c.name, date, getEffectiveSession(c.id, date), s.name, s.grade || '', dayAtt[s.id] || 'not marked', lesson]));
     });
   });
-  if (rows.length === 1) { showToast('Nothing recorded yet'); return; }
-  const blob = new Blob([rows.map(r => r.map(csvCell).join(',')).join('\n')], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'sunday-school-attendance-' + todayStr() + '.csv';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  return rows.length > 1 ? rows.map(r => r.map(csvCell).join(',')).join('\n') : null;
+}
+
+function showCsvFallback(csv) {
+  document.getElementById('csvText').value = csv;
+  document.getElementById('csvFallback').style.display = 'block';
+}
+
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const csv = buildCsv();
+  if (!csv) { showToast('Nothing recorded yet'); return; }
+  const filename = 'sunday-school-attendance-' + todayStr() + '.csv';
+  const downloads = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
+  if (downloads) {
+    try {
+      await downloads.save({ filename, data: csv });
+      showToast('CSV saved');
+      return;
+    } catch (e) {
+      if (e && e.code === 'declined') return;
+      if (e && e.code === 'rate_limited') { showToast('A save prompt is already open'); return; }
+      showCsvFallback(csv);
+      return;
+    }
+  }
+  if (!window.claude) {
+    // Opened as a plain file: a normal browser download works.
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    return;
+  }
+  showCsvFallback(csv);
+});
+
+document.getElementById('copyCsvBtn').addEventListener('click', async () => {
+  const el = document.getElementById('csvText');
+  const ok = await copyText(el.value, el);
+  showToast(ok ? 'CSV copied' : 'Copy was blocked. The text is selected, copy it manually');
 });
 
 // ---------- Init ----------
@@ -949,10 +1238,10 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 (async function init() {
   state = emptyState();
   populateDateSelects();
-  await loadState();
   renderAll();
+  renderStorageBanner();
+  db = window.claude && window.claude.use ? await window.claude.use('db') : null;
+  if (db) initShared();
+  else initLocal();
 })();
 </script>
-
-</body>
-</html>
