@@ -482,6 +482,12 @@ function todayStr() {
 }
 
 function attKey(classId, date) { return classId + '_' + date; }
+
+// A class's students in alphabetical order, used by every list and report.
+const nameOrder = new Intl.Collator('en', { sensitivity: 'base', numeric: true });
+function studentsIn(classId) {
+  return state.students.filter(s => s.classId === classId).sort((a, b) => nameOrder.compare(a.name, b.name));
+}
 function splitKey(key) { const i = key.lastIndexOf('_'); return [key.slice(0, i), key.slice(i + 1)]; }
 
 // ---------- Storage ----------
@@ -937,7 +943,7 @@ function renderStudentList() {
   const date = document.getElementById('dateSelect').value;
   const list = document.getElementById('studentList');
   const noStudents = document.getElementById('noStudents');
-  const students = state.students.filter(s => s.classId === classId);
+  const students = studentsIn(classId);
   const key = attKey(classId, date);
 
   const sessionEl = document.getElementById('sessionLabel');
@@ -1007,7 +1013,7 @@ function renderAttendanceButtons() {
 
 function renderTally() {
   const classId = document.getElementById('classSelect').value;
-  const students = state.students.filter(s => s.classId === classId);
+  const students = studentsIn(classId);
   const dayAtt = state.attendance[currentKey()] || {};
   const p = students.filter(s => dayAtt[s.id] === 'present').length;
   const a = students.filter(s => dayAtt[s.id] === 'absent').length;
@@ -1035,7 +1041,7 @@ function renderClassManageList() {
     return;
   }
   list.innerHTML = state.classes.map(c => {
-    const count = state.students.filter(s => s.classId === c.id).length;
+    const count = studentsIn(c.id).length;
     return `
       <div style="padding:10px 0; border-bottom:1px solid var(--border);">
         <div class="student-row" style="padding:0 0 6px 0; border:none;">
@@ -1074,7 +1080,7 @@ function renderClassManageList() {
 function renderStudentManageList() {
   const classId = document.getElementById('manageClassSelect').value;
   const list = document.getElementById('studentManageList');
-  const students = state.students.filter(s => s.classId === classId);
+  const students = studentsIn(classId);
   if (students.length === 0) {
     list.innerHTML = '<div class="empty">No students in this class.</div>';
     return;
@@ -1117,7 +1123,7 @@ function renderReports() {
 
   list.innerHTML = state.classes.map(c => {
     const dates = getClassDates(c.id);
-    const students = state.students.filter(s => s.classId === c.id);
+    const students = studentsIn(c.id);
     if (dates.length === 0 || students.length === 0) {
       return `<div class="report-row"><div class="name">${escapeHtml(c.name)}</div><div class="meta">No attendance recorded yet</div></div>`;
     }
@@ -1185,7 +1191,7 @@ function heldDates() {
 }
 
 function dayStats(classId, date) {
-  const students = state.students.filter(s => s.classId === classId);
+  const students = studentsIn(classId);
   const dayAtt = state.attendance[attKey(classId, date)] || {};
   let present = 0, absent = 0;
   students.forEach(s => { if (dayAtt[s.id] === 'present') present++; else if (dayAtt[s.id] === 'absent') absent++; });
@@ -1431,7 +1437,7 @@ document.getElementById('genMsgBtn').addEventListener('click', () => {
   const key = attKey(classId, date);
   const dayAtt = state.attendance[key] || {};
   const topic = state.lessons[key] || '(not recorded)';
-  const students = state.students.filter(s => s.classId === classId);
+  const students = studentsIn(classId);
   const present = students.filter(s => dayAtt[s.id] === 'present').map(s => s.name);
   const absent = students.filter(s => dayAtt[s.id] === 'absent').map(s => s.name);
   const includeNames = document.getElementById('msgIncludeNames').checked;
@@ -1592,7 +1598,7 @@ function csvCell(v) {
 function buildCsv() {
   const rows = [['Class', 'Date', 'Class #', 'Student', 'Grade', 'Status', 'Lesson notes']];
   state.classes.forEach(c => {
-    const students = state.students.filter(s => s.classId === c.id);
+    const students = studentsIn(c.id);
     getClassDates(c.id).forEach(date => {
       const key = attKey(c.id, date);
       const dayAtt = state.attendance[key] || {};
