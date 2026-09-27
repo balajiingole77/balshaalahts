@@ -53,8 +53,49 @@ async function initDb() {
   // First start only: load the official classes and roster. Never overwrites existing data.
   await pool.query(`INSERT INTO docs (name, data) VALUES ('classes', $1), ('students', $2) ON CONFLICT (name) DO NOTHING`,
     [SEED.classes, SEED.students]);
+  await runMigrations();
   dbReady = true;
   console.log('Database ready');
+}
+
+// One-time data changes for an existing database. Each runs once, is recorded in the
+// migrations table, and is never repeated, so later edits made in Admin are kept.
+const MIGRATIONS = [
+  {
+    id: 'teachers-2026-27',
+    // Set each official class's teachers from seed.json (the 2026-27 team list).
+    async run(client) {
+      const r = await client.query(`SELECT data FROM docs WHERE name = 'classes' FOR UPDATE`);
+      if (!r.rows.length) return;
+      const teachers = {};
+      SEED.classes.list.forEach(c => { teachers[c.id] = c.teacher; });
+      const data = r.rows[0].data;
+      (data.list || []).forEach(c => { if (teachers[c.id] !== undefined) c.teacher = teachers[c.id]; });
+      await client.query(`UPDATE docs SET data = $1, version = version + 1, updated_at = now() WHERE name = 'classes'`, [data]);
+    }
+  }
+];
+
+async function runMigrations() {
+  await pool.query(`CREATE TABLE IF NOT EXISTS migrations (id text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())`);
+  for (const m of MIGRATIONS) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      // The insert both claims the migration and makes a second server instance skip it.
+      const claimed = await client.query(`INSERT INTO migrations (id) VALUES ($1) ON CONFLICT (id) DO NOTHING RETURNING id`, [m.id]);
+      if (claimed.rows.length) {
+        await m.run(client);
+        console.log('Applied migration ' + m.id);
+      }
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
 }
 
 async function initDbWithRetry(attempt = 1) {
