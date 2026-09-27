@@ -153,6 +153,10 @@
   .att-btn.present.on { background: var(--green); color: var(--card); border-color: var(--green); }
   .att-btn.absent.on { background: var(--red); color: var(--card); border-color: var(--red); }
   .ghost { color: var(--muted); font-weight: 500; padding: 4px 8px; }
+  .teacher-line { display: flex; align-items: baseline; gap: 8px; padding: 10px 12px; margin-bottom: 12px; background: var(--tint); border: 1px solid var(--border); border-radius: 8px; font-size: 14px; line-height: 1.4; }
+  .teacher-line .k { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; flex-shrink: 0; }
+  .teacher-line .v { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+  .teacher-line .v.none { font-weight: 400; color: var(--muted); }
   .tally { display: flex; gap: 12px; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-variant-numeric: tabular-nums; flex-wrap: wrap; }
   .tally b { color: var(--ink); }
   button.primary, button.secondary {
@@ -278,6 +282,7 @@
     <input type="text" id="sessionOverride" placeholder="Auto-calculated, edit to override" style="margin-bottom:0;">
   </div>
   <div class="card">
+    <div class="teacher-line" id="teacherLine" style="display:none;"></div>
     <div class="label">Students</div>
     <div class="tally" id="tally"></div>
     <div class="hint" style="font-size:12px; margin-bottom:4px;">Each tap saves immediately.</div>
@@ -914,8 +919,21 @@ function renderClassSelects() {
   });
 }
 
+function renderTeacherLine(classId) {
+  const el = document.getElementById('teacherLine');
+  const cls = state.classes.find(c => c.id === classId);
+  if (!cls) { el.style.display = 'none'; return; }
+  const teachers = (cls.teacher || '').trim();
+  const label = /&|,| and /i.test(teachers) ? 'Teachers' : 'Teacher';
+  el.innerHTML = `<span class="k">${label}</span>` + (teachers
+    ? `<span class="v">${escapeHtml(teachers)}</span>`
+    : '<span class="v none">Not assigned yet. Add in Admin → Manage classes.</span>');
+  el.style.display = 'flex';
+}
+
 function renderStudentList() {
   const classId = document.getElementById('classSelect').value;
+  renderTeacherLine(classId);
   const date = document.getElementById('dateSelect').value;
   const list = document.getElementById('studentList');
   const noStudents = document.getElementById('noStudents');
