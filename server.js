@@ -1,4 +1,4 @@
-// Sunday School Tracker server: serves index.html and stores data in Postgres.
+// Balshaala HTS 2026 Attendance Tracker server: serves index.html and stores data in Postgres.
 //
 // Env:
 //   DATABASE_URL   Postgres connection string (on Railway: ${{Postgres.DATABASE_URL}})
@@ -104,7 +104,7 @@ function checkAuth(req, res) {
     entry.count++;
     failures.set(ip, entry);
   }
-  res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Sunday School Tracker", charset="UTF-8"', 'Content-Type': 'text/plain' });
+  res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Balshaala HTS Attendance", charset="UTF-8"', 'Content-Type': 'text/plain' });
   res.end('Password required. Any username works; the password is the one shared with teachers.');
   return false;
 }
