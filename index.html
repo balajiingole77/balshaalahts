@@ -21,6 +21,10 @@
     --toast-bg: #2a1e14;
     --toast-ink: #ffffff;
     --scrim: rgba(42, 30, 20, 0.45);
+    --good-bg: #dcfce7;
+    --watch-bg: #fef3c7;
+    --low-bg: #fee2e2;
+    --none-bg: #f3ece3;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -44,6 +48,10 @@
       --toast-bg: #f3e9dc;
       --toast-ink: #17120d;
       --scrim: rgba(0, 0, 0, 0.6);
+      --good-bg: #173322;
+      --watch-bg: #3a2c10;
+      --low-bg: #3b1616;
+      --none-bg: #2a2119;
     }
   }
   :root[data-theme="dark"] {
@@ -67,6 +75,10 @@
     --toast-bg: #f3e9dc;
     --toast-ink: #17120d;
     --scrim: rgba(0, 0, 0, 0.6);
+    --good-bg: #173322;
+    --watch-bg: #3a2c10;
+    --low-bg: #3b1616;
+    --none-bg: #2a2119;
   }
   * { box-sizing: border-box; }
   body {
@@ -187,6 +199,41 @@
   .meta { font-size: 12px; color: var(--muted); }
   .bar { background: var(--border); border-radius: 4px; height: 6px; margin-top: 6px; overflow: hidden; }
   .bar > div { height: 100%; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; }
+  .seg button { padding: 9px 6px; border: none; border-radius: 7px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .seg button.on { background: var(--tint); color: var(--ink); box-shadow: inset 0 0 0 1px var(--border); }
+  .tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+  .tile { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+  .tile .k { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .tile .v { font-size: 28px; font-weight: 700; line-height: 1.15; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .tile .d { font-size: 12px; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .sum-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .sum-head .label { margin: 0; }
+  .sum-head select { width: auto; margin: 0; padding: 6px 8px; font-size: 13px; }
+  .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.sum { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+  table.sum th { text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; padding: 0 8px 8px 0; white-space: nowrap; }
+  table.sum td { padding: 9px 8px 9px 0; border-top: 1px solid var(--border); vertical-align: middle; }
+  table.sum td.num, table.sum th.num { text-align: right; }
+  table.sum td.cls { font-weight: 600; }
+  table.sum .teacher { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; color: var(--ink); }
+  .pill.good { background: var(--good-bg); }
+  .pill.watch { background: var(--watch-bg); }
+  .pill.low { background: var(--low-bg); }
+  .pill.none { background: var(--none-bg); color: var(--muted); }
+  table.grid { border-collapse: separate; border-spacing: 2px; font-size: 12px; font-variant-numeric: tabular-nums; }
+  table.grid th { font-size: 11px; font-weight: 600; color: var(--muted); padding: 4px 6px; white-space: nowrap; text-align: center; }
+  table.grid th.row { text-align: left; color: var(--ink); font-size: 12px; position: sticky; left: 0; background: var(--card); padding-left: 0; }
+  table.grid td { min-width: 46px; height: 32px; text-align: center; border-radius: 4px; color: var(--ink); font-weight: 600; }
+  table.grid td.good { background: var(--good-bg); }
+  table.grid td.watch { background: var(--watch-bg); }
+  table.grid td.low { background: var(--low-bg); }
+  table.grid td.none { background: var(--none-bg); color: var(--muted); font-weight: 400; }
+  table.grid td.ytd { box-shadow: inset 0 0 0 1.5px var(--ink); }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
   .stu-stat { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 13px; font-variant-numeric: tabular-nums; }
   .toast {
     position: fixed; left: 50%; transform: translateX(-50%);
@@ -216,7 +263,7 @@
 <div class="tabs" role="tablist">
   <button class="tab active" data-tab="attendance" role="tab">Attendance</button>
   <button class="tab" data-tab="message" role="tab">Message</button>
-  <button class="tab" data-tab="manage" role="tab">Manage</button>
+  <button class="tab" data-tab="manage" role="tab">Admin</button>
   <button class="tab" data-tab="reports" role="tab">Reports</button>
 </div>
 
@@ -264,12 +311,49 @@
 <div id="manage-tab" style="display:none;">
   <div id="pinGate" class="card">
     <label for="pinInput">Admin PIN required</label>
-    <div class="hint">Enter the shared admin PIN to manage classes and students. This only guards against accidental edits. Anyone who can read the page source can find it.</div>
+    <div class="hint">Enter the shared admin PIN to see the school-wide summary and manage classes and students. This only guards against accidental edits. Anyone who can read the page source can find it.</div>
     <input type="text" id="pinInput" placeholder="Enter PIN" inputmode="numeric" autocomplete="off">
     <button class="primary" id="pinSubmit">Unlock</button>
     <div id="pinError" style="color:var(--red); font-size:13px; margin-top:8px;"></div>
   </div>
   <div id="manageContent" style="display:none;">
+    <div class="seg" role="tablist">
+      <button class="on" data-sub="summary" role="tab">Summary</button>
+      <button data-sub="manage" role="tab">Manage classes</button>
+    </div>
+    <div id="summary-sub">
+      <div class="tiles" id="sumTiles"></div>
+      <div class="card">
+        <div class="sum-head">
+          <div class="label">Week status</div>
+          <select id="sumWeek" aria-label="Sunday"></select>
+        </div>
+        <div class="scroll-x"><table class="sum" id="sumWeekTable"></table></div>
+      </div>
+      <div class="card">
+        <div class="label">Attendance by Sunday</div>
+        <div class="hint" style="font-size:12px;">Percent of marked students who were present. Tap or hover a cell for counts.</div>
+        <div class="scroll-x"><table class="grid" id="sumGrid"></table></div>
+        <div class="legend">
+          <span><i style="background:var(--good-bg)"></i>80% or more</span>
+          <span><i style="background:var(--watch-bg)"></i>60 to 79%</span>
+          <span><i style="background:var(--low-bg)"></i>under 60%</span>
+          <span><i style="background:var(--none-bg)"></i>not taken</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">Students needing attention</div>
+        <div class="hint" style="font-size:12px;">Under 80% attendance, with at least 2 Sundays marked.</div>
+        <div id="sumStudents"></div>
+      </div>
+      <div class="card">
+        <div class="label">Share with the coordinator</div>
+        <div class="hint">Copies a short text summary with counts only, no children's names.</div>
+        <div class="msg-box" id="sumText" style="display:none;"></div>
+        <button class="primary" id="sumCopyBtn">Copy Summary</button>
+      </div>
+    </div>
+    <div id="manage-sub" style="display:none;">
     <div class="card">
       <div class="label">Official roster</div>
       <div class="hint">Loads the Fall 2026 class rosters (<span id="rosterSummary"></span>). Replaces the current student list, including test data. Attendance and parent contacts are kept for students on the roster.</div>
@@ -301,6 +385,7 @@
       <div class="label">Reset for pilot</div>
       <div class="hint">Deletes every student and all attendance and lesson history for every class. Class names stay. Cannot be undone, so export a CSV from Reports first.</div>
       <button class="secondary danger" id="resetBtn">Clear All Students & Attendance</button>
+    </div>
     </div>
   </div>
 </div>
@@ -520,6 +605,7 @@ function afterSharedChange() {
   renderStorageBanner();
   renderAll();
   if (document.getElementById('reports-tab').style.display !== 'none') renderReports();
+  renderSummaryIfVisible();
 }
 
 async function writeSession(key, patch) {
@@ -1049,7 +1135,163 @@ function renderAll() {
   loadTopic();
   renderClassManageList();
   renderStudentManageList();
+  renderSummaryIfVisible();
 }
+
+// ---------- Admin summary ----------
+
+function band(pct) {
+  return pct === null ? 'none' : pct >= 80 ? 'good' : pct >= 60 ? 'watch' : 'low';
+}
+function fmtPct(pct) { return pct === null ? 'n/a' : pct + '%'; }
+function pctOf(n, d) { return d > 0 ? Math.round((n / d) * 100) : null; }
+
+// Sundays that have happened, plus any date someone already recorded.
+function heldDates() {
+  const today = todayStr();
+  return SUNDAY_DATES.filter(d => d <= today || state.classes.some(c => state.attendance[attKey(c.id, d)] || state.lessons[attKey(c.id, d)]));
+}
+
+function dayStats(classId, date) {
+  const students = state.students.filter(s => s.classId === classId);
+  const dayAtt = state.attendance[attKey(classId, date)] || {};
+  let present = 0, absent = 0;
+  students.forEach(s => { if (dayAtt[s.id] === 'present') present++; else if (dayAtt[s.id] === 'absent') absent++; });
+  return { enrolled: students.length, present, absent, marked: present + absent, lesson: !!state.lessons[attKey(classId, date)] };
+}
+
+function computeSummary(week) {
+  const dates = heldDates();
+  const classes = state.classes.map(c => {
+    const byDate = {};
+    let present = 0, marked = 0;
+    dates.forEach(d => { const st = dayStats(c.id, d); byDate[d] = st; present += st.present; marked += st.marked; });
+    const w = dayStats(c.id, week);
+    return { c, byDate, present, marked, ytd: pctOf(present, marked), week: w, weekPct: pctOf(w.present, w.marked) };
+  });
+  const totals = classes.reduce((t, x) => ({ present: t.present + x.present, marked: t.marked + x.marked, wp: t.wp + x.week.present, wm: t.wm + x.week.marked }), { present: 0, marked: 0, wp: 0, wm: 0 });
+  const takenDates = dates.filter(d => classes.some(x => x.byDate[d].marked > 0));
+  const flagged = [];
+  state.students.forEach(s => {
+    let p = 0, m = 0;
+    dates.forEach(d => { const v = (state.attendance[attKey(s.classId, d)] || {})[s.id]; if (v === 'present' || v === 'absent') { m++; if (v === 'present') p++; } });
+    const pct = pctOf(p, m);
+    if (m >= 2 && pct < 80) flagged.push({ s, p, m, pct, cls: state.classes.find(c => c.id === s.classId) });
+  });
+  flagged.sort((a, b) => a.pct - b.pct || a.s.name.localeCompare(b.s.name));
+  return { dates, takenDates, classes, totals, flagged, week };
+}
+
+// "DHRUVA" in bold, with "3rd & 4th Grades · teacher" underneath, so rows stay short on phones.
+function classCell(c) {
+  const i = c.name.indexOf(' ');
+  const short = i > 0 ? c.name.slice(0, i) : c.name;
+  const rest = [i > 0 ? c.name.slice(i + 1) : '', c.teacher || ''].filter(Boolean).join(' · ');
+  return escapeHtml(short) + (rest ? `<span class="teacher">${escapeHtml(rest)}</span>` : '');
+}
+
+function weekStatus(w) {
+  if (w.enrolled === 0) return { cls: 'none', text: 'No students' };
+  if (w.marked === 0) return { cls: 'low', text: '✕ Not taken' };
+  if (w.marked < w.enrolled) return { cls: 'watch', text: '◐ ' + (w.enrolled - w.marked) + ' unmarked' };
+  return { cls: 'good', text: '✓ Complete' };
+}
+
+function populateSumWeek() {
+  const sel = document.getElementById('sumWeek');
+  const dates = heldDates();
+  const options = dates.length ? dates : [SUNDAY_DATES[0]];
+  const html = options.map(d => `<option value="${d}">${fmtDateOpt(d)} · Class ${getSessionNumber(d)}</option>`).join('');
+  const prev = sel.value;
+  if (sel.innerHTML !== html) sel.innerHTML = html;
+  sel.value = options.includes(prev) ? prev : options[options.length - 1];
+}
+
+function renderSummaryIfVisible() {
+  if (document.getElementById('manage-tab').style.display === 'none') return;
+  if (document.getElementById('manageContent').style.display === 'none') return;
+  if (document.getElementById('summary-sub').style.display === 'none') return;
+  renderSummary();
+}
+
+function renderSummary() {
+  populateSumWeek();
+  const week = document.getElementById('sumWeek').value;
+  const S = computeSummary(week);
+  const ytd = pctOf(S.totals.present, S.totals.marked);
+  const wk = pctOf(S.totals.wp, S.totals.wm);
+  const takenThisWeek = S.classes.filter(x => x.week.marked > 0).length;
+
+  document.getElementById('sumTiles').innerHTML = `
+    <div class="tile"><div class="k">Year to date</div><div class="v">${fmtPct(ytd)}</div><div class="d">${S.totals.present} of ${S.totals.marked} marks · ${S.takenDates.length} Sunday${S.takenDates.length === 1 ? '' : 's'}</div></div>
+    <div class="tile"><div class="k">${escapeHtml(fmtDateOpt(week))}</div><div class="v">${fmtPct(wk)}</div><div class="d">${S.totals.wp} present · ${takenThisWeek} of ${S.classes.length} classes taken</div></div>
+    <div class="tile"><div class="k">Students</div><div class="v">${state.students.length}</div><div class="d">across ${state.classes.length} classes</div></div>
+    <div class="tile"><div class="k">Under 80%</div><div class="v">${S.flagged.length}</div><div class="d">${S.flagged.filter(f => f.pct < 60).length} under 60%</div></div>`;
+
+  document.getElementById('sumWeekTable').innerHTML = `
+    <tr><th>Class</th><th class="num">Present</th><th class="num">%</th><th>Status</th><th title="Lesson note logged">Note</th></tr>` +
+    S.classes.map(x => {
+      const st = weekStatus(x.week);
+      return `<tr>
+        <td class="cls">${classCell(x.c)}</td>
+        <td class="num">${x.week.present} / ${x.week.enrolled}</td>
+        <td class="num">${fmtPct(x.weekPct)}</td>
+        <td><span class="pill ${st.cls}">${st.text}</span></td>
+        <td>${x.week.lesson ? '<span title="Lesson note logged">✓</span>' : '<span style="color:var(--muted)" title="No lesson note yet">–</span>'}</td>
+      </tr>`;
+    }).join('');
+
+  const head = `<tr><th class="row"></th>${S.dates.map(d => `<th>${fmtDateOpt(d)}</th>`).join('')}<th>Year</th></tr>`;
+  const rows = S.classes.map(x => {
+    const cells = S.dates.map(d => {
+      const st = x.byDate[d];
+      const p = pctOf(st.present, st.marked);
+      const tip = `${x.c.name} · ${fmtDateOpt(d)}: ` + (st.marked ? `${st.present} of ${st.marked} marked present (${p}%)${st.enrolled > st.marked ? ', ' + (st.enrolled - st.marked) + ' unmarked' : ''}` : 'attendance not taken');
+      return `<td class="${band(p)}" title="${escapeHtml(tip)}" tabindex="0">${p === null ? '·' : p}</td>`;
+    }).join('');
+    const ytdTip = `${x.c.name} · year to date: ${x.present} of ${x.marked} marks present`;
+    return `<tr><th class="row" scope="row">${escapeHtml(x.c.name.split(' ')[0])}</th>${cells}<td class="${band(x.ytd)} ytd" title="${escapeHtml(ytdTip)}" tabindex="0">${x.ytd === null ? '·' : x.ytd}</td></tr>`;
+  }).join('');
+  document.getElementById('sumGrid').innerHTML = S.classes.length ? head + rows : '<tr><td class="empty">No classes yet.</td></tr>';
+
+  document.getElementById('sumStudents').innerHTML = S.flagged.length
+    ? `<table class="sum"><tr><th>Student</th><th>Class</th><th class="num">Attended</th><th class="num">%</th></tr>` +
+      S.flagged.map(f => `<tr><td>${escapeHtml(f.s.name)}</td><td>${escapeHtml(f.cls ? f.cls.name.split(' ')[0] : '')}</td><td class="num">${f.p} of ${f.m}</td><td class="num"><span class="pill ${band(f.pct)}">${f.pct}%</span></td></tr>`).join('') + `</table>`
+    : '<div class="empty">No students under 80% yet.</div>';
+  document.getElementById('sumText').style.display = 'none';
+}
+
+function summaryText() {
+  const week = document.getElementById('sumWeek').value;
+  const S = computeSummary(week);
+  const wkLong = new Date(week + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const lines = [`🪔 Balshaala HTS attendance · ${wkLong} (Class ${getSessionNumber(week)})`, ''];
+  const wk = pctOf(S.totals.wp, S.totals.wm);
+  lines.push(`This week: ${fmtPct(wk)} (${S.totals.wp} of ${S.totals.wm} marked students present)`);
+  S.classes.forEach(x => {
+    lines.push(x.week.marked ? `• ${x.c.name}: ${x.week.present}/${x.week.enrolled} (${fmtPct(x.weekPct)})` : `• ${x.c.name}: not taken yet`);
+  });
+  lines.push('', `Year to date: ${fmtPct(pctOf(S.totals.present, S.totals.marked))} across ${S.takenDates.length} Sunday${S.takenDates.length === 1 ? '' : 's'}`);
+  lines.push(`Students under 80%: ${S.flagged.length} (${S.flagged.filter(f => f.pct < 60).length} under 60%)`);
+  return lines.join('\n');
+}
+
+document.querySelectorAll('.seg button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b === btn));
+    document.getElementById('summary-sub').style.display = btn.dataset.sub === 'summary' ? 'block' : 'none';
+    document.getElementById('manage-sub').style.display = btn.dataset.sub === 'manage' ? 'block' : 'none';
+    renderSummaryIfVisible();
+  });
+});
+document.getElementById('sumWeek').addEventListener('change', renderSummary);
+document.getElementById('sumCopyBtn').addEventListener('click', async () => {
+  const box = document.getElementById('sumText');
+  box.textContent = summaryText();
+  box.style.display = 'block';
+  const ok = await copyText(box.textContent, box);
+  showToast(ok ? 'Summary copied' : 'Copy was blocked. The text is selected, copy it manually');
+});
 
 // ---------- PIN gate ----------
 
@@ -1060,6 +1302,7 @@ document.getElementById('pinSubmit').addEventListener('click', () => {
     document.getElementById('pinGate').style.display = 'none';
     document.getElementById('manageContent').style.display = 'block';
     document.getElementById('pinError').textContent = '';
+    renderSummaryIfVisible();
   } else {
     document.getElementById('pinError').textContent = 'Incorrect PIN';
   }
@@ -1077,6 +1320,7 @@ document.querySelectorAll('.tab').forEach(tab => {
       document.getElementById(name + '-tab').style.display = name === tab.dataset.tab ? 'block' : 'none';
     });
     if (tab.dataset.tab === 'reports') renderReports();
+    if (tab.dataset.tab === 'manage') renderSummaryIfVisible();
   });
 });
 
