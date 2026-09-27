@@ -311,7 +311,7 @@
 <div id="manage-tab" style="display:none;">
   <div id="pinGate" class="card">
     <label for="pinInput">Admin PIN required</label>
-    <div class="hint">Enter the shared admin PIN to see the school-wide summary and manage classes and students. This only guards against accidental edits. Anyone who can read the page source can find it.</div>
+    <div class="hint" id="pinHint">Enter the admin PIN to see the school-wide summary and manage classes and students.</div>
     <input type="text" id="pinInput" placeholder="Enter PIN" inputmode="numeric" autocomplete="off">
     <button class="primary" id="pinSubmit">Unlock</button>
     <div id="pinError" style="color:var(--red); font-size:13px; margin-top:8px;"></div>
@@ -336,14 +336,14 @@
         <div class="scroll-x"><table class="grid" id="sumGrid"></table></div>
         <div class="legend">
           <span><i style="background:var(--good-bg)"></i>80% or more</span>
-          <span><i style="background:var(--watch-bg)"></i>60 to 79%</span>
-          <span><i style="background:var(--low-bg)"></i>under 60%</span>
+          <span><i style="background:var(--watch-bg)"></i>50 to 79%</span>
+          <span><i style="background:var(--low-bg)"></i>under 50%</span>
           <span><i style="background:var(--none-bg)"></i>not taken</span>
         </div>
       </div>
       <div class="card">
         <div class="label">Students needing attention</div>
-        <div class="hint" style="font-size:12px;">Under 80% attendance, with at least 2 Sundays marked.</div>
+        <div class="hint" style="font-size:12px;">Under 50% attendance, with at least 2 Sundays marked.</div>
         <div id="sumStudents"></div>
       </div>
       <div class="card">
@@ -498,6 +498,8 @@ function queueWrite(fn) {
       if (e && e.status === 409) {
         showToast('Someone else changed this at the same time. Try again.');
         refreshServer();
+      } else if (e && e.status === 403) {
+        showToast('Admin PIN was not accepted. Reload the page and unlock Admin again.');
       } else if (e && e.status === 401) {
         showToast('Your login expired. Reload the page and enter the password.');
       } else if (e && e.code === 'invalid_argument' && mode === 'shared') {
@@ -639,7 +641,7 @@ let pendingWrites = 0;
 async function api(method, url, body) {
   const res = await fetch(url, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : {},
+    headers: Object.assign(body ? { 'Content-Type': 'application/json' } : {}, adminPin ? { 'X-Admin-Pin': adminPin } : {}),
     body: body ? JSON.stringify(body) : undefined,
     credentials: 'same-origin',
     cache: 'no-store'
@@ -1071,8 +1073,12 @@ function renderStudentManageList() {
   });
 }
 
+// Attendance bands, shared by Reports and the admin Summary.
+const GOOD_PCT = 80;      // at or above: good
+const ATTENTION_PCT = 50; // below: needs attention
+
 function pctColor(pct) {
-  return pct === null ? 'var(--muted)' : pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
+  return pct === null ? 'var(--muted)' : pct >= GOOD_PCT ? 'var(--green)' : pct >= ATTENTION_PCT ? 'var(--amber)' : 'var(--red)';
 }
 
 function renderReports() {
@@ -1141,7 +1147,7 @@ function renderAll() {
 // ---------- Admin summary ----------
 
 function band(pct) {
-  return pct === null ? 'none' : pct >= 80 ? 'good' : pct >= 60 ? 'watch' : 'low';
+  return pct === null ? 'none' : pct >= GOOD_PCT ? 'good' : pct >= ATTENTION_PCT ? 'watch' : 'low';
 }
 function fmtPct(pct) { return pct === null ? 'n/a' : pct + '%'; }
 function pctOf(n, d) { return d > 0 ? Math.round((n / d) * 100) : null; }
@@ -1176,7 +1182,7 @@ function computeSummary(week) {
     let p = 0, m = 0;
     dates.forEach(d => { const v = (state.attendance[attKey(s.classId, d)] || {})[s.id]; if (v === 'present' || v === 'absent') { m++; if (v === 'present') p++; } });
     const pct = pctOf(p, m);
-    if (m >= 2 && pct < 80) flagged.push({ s, p, m, pct, cls: state.classes.find(c => c.id === s.classId) });
+    if (m >= 2 && pct < ATTENTION_PCT) flagged.push({ s, p, m, pct, cls: state.classes.find(c => c.id === s.classId) });
   });
   flagged.sort((a, b) => a.pct - b.pct || a.s.name.localeCompare(b.s.name));
   return { dates, takenDates, classes, totals, flagged, week };
@@ -1226,7 +1232,7 @@ function renderSummary() {
     <div class="tile"><div class="k">Year to date</div><div class="v">${fmtPct(ytd)}</div><div class="d">${S.totals.present} of ${S.totals.marked} marks · ${S.takenDates.length} Sunday${S.takenDates.length === 1 ? '' : 's'}</div></div>
     <div class="tile"><div class="k">${escapeHtml(fmtDateOpt(week))}</div><div class="v">${fmtPct(wk)}</div><div class="d">${S.totals.wp} present · ${takenThisWeek} of ${S.classes.length} classes taken</div></div>
     <div class="tile"><div class="k">Students</div><div class="v">${state.students.length}</div><div class="d">across ${state.classes.length} classes</div></div>
-    <div class="tile"><div class="k">Under 80%</div><div class="v">${S.flagged.length}</div><div class="d">${S.flagged.filter(f => f.pct < 60).length} under 60%</div></div>`;
+    <div class="tile"><div class="k">Under ${ATTENTION_PCT}%</div><div class="v">${S.flagged.length}</div><div class="d">student${S.flagged.length === 1 ? '' : 's'}, 2+ Sundays marked</div></div>`;
 
   document.getElementById('sumWeekTable').innerHTML = `
     <tr><th>Class</th><th class="num">Present</th><th class="num">%</th><th>Status</th><th title="Lesson note logged">Note</th></tr>` +
@@ -1257,7 +1263,7 @@ function renderSummary() {
   document.getElementById('sumStudents').innerHTML = S.flagged.length
     ? `<table class="sum"><tr><th>Student</th><th>Class</th><th class="num">Attended</th><th class="num">%</th></tr>` +
       S.flagged.map(f => `<tr><td>${escapeHtml(f.s.name)}</td><td>${escapeHtml(f.cls ? f.cls.name.split(' ')[0] : '')}</td><td class="num">${f.p} of ${f.m}</td><td class="num"><span class="pill ${band(f.pct)}">${f.pct}%</span></td></tr>`).join('') + `</table>`
-    : '<div class="empty">No students under 80% yet.</div>';
+    : `<div class="empty">No students under ${ATTENTION_PCT}% yet.</div>`;
   document.getElementById('sumText').style.display = 'none';
 }
 
@@ -1272,7 +1278,7 @@ function summaryText() {
     lines.push(x.week.marked ? `• ${x.c.name}: ${x.week.present}/${x.week.enrolled} (${fmtPct(x.weekPct)})` : `• ${x.c.name}: not taken yet`);
   });
   lines.push('', `Year to date: ${fmtPct(pctOf(S.totals.present, S.totals.marked))} across ${S.takenDates.length} Sunday${S.takenDates.length === 1 ? '' : 's'}`);
-  lines.push(`Students under 80%: ${S.flagged.length} (${S.flagged.filter(f => f.pct < 60).length} under 60%)`);
+  lines.push(`Students under ${ATTENTION_PCT}%: ${S.flagged.length}`);
   return lines.join('\n');
 }
 
@@ -1295,16 +1301,33 @@ document.getElementById('sumCopyBtn').addEventListener('click', async () => {
 
 // ---------- PIN gate ----------
 
-const ADMIN_PIN = '1421'; // temple street number, easy to remember, change as needed. Not real security.
+// On the server the PIN is checked there (ADMIN_PIN variable) and sent with every admin
+// change, so it never appears in this page. Device-only and Claude-artifact copies have no
+// server to check against; access to those is controlled by who can open them.
+let adminPin = '';
 
-document.getElementById('pinSubmit').addEventListener('click', () => {
-  if (document.getElementById('pinInput').value.trim() === ADMIN_PIN) {
-    document.getElementById('pinGate').style.display = 'none';
-    document.getElementById('manageContent').style.display = 'block';
-    document.getElementById('pinError').textContent = '';
-    renderSummaryIfVisible();
-  } else {
-    document.getElementById('pinError').textContent = 'Incorrect PIN';
+function unlockAdmin() {
+  document.getElementById('pinGate').style.display = 'none';
+  document.getElementById('manageContent').style.display = 'block';
+  document.getElementById('pinError').textContent = '';
+  renderSummaryIfVisible();
+}
+
+document.getElementById('pinSubmit').addEventListener('click', async () => {
+  const pin = document.getElementById('pinInput').value.trim();
+  const errEl = document.getElementById('pinError');
+  if (mode !== 'server') { unlockAdmin(); return; }
+  if (!pin) { errEl.textContent = 'Enter the PIN'; return; }
+  try {
+    await api('POST', '/api/admin/check', { pin });
+    adminPin = pin;
+    document.getElementById('pinInput').value = '';
+    unlockAdmin();
+  } catch (e) {
+    errEl.textContent = e.status === 403 ? 'Incorrect PIN'
+      : e.status === 429 ? 'Too many wrong PINs. Try again in 15 minutes.'
+      : e.status === 503 ? 'Admin is turned off: ADMIN_PIN is not set on the server.'
+      : "Couldn't check the PIN. Check your connection and try again.";
   }
 });
 document.getElementById('pinInput').addEventListener('keydown', (e) => {
@@ -1606,5 +1629,9 @@ document.getElementById('copyCsvBtn').addEventListener('click', async () => {
   db = window.claude && window.claude.use ? await window.claude.use('db') : null;
   if (db) initShared();
   else if (!(await tryInitServer())) initLocal();
+  if (mode !== 'server') {
+    document.getElementById('pinHint').textContent = 'This copy is not connected to the school server, so no PIN is needed here. Tap Unlock.';
+    document.getElementById('pinInput').style.display = 'none';
+  }
 })();
 </script>

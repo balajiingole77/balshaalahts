@@ -4,6 +4,8 @@
 //   DATABASE_URL   Postgres connection string (on Railway: ${{Postgres.DATABASE_URL}})
 //   APP_PASSWORD   shared password every teacher enters. Required: without it nothing is served,
 //                  because the page and data contain children's names.
+//   ADMIN_PIN      PIN for the Admin area (summary, roster, classes, deletes). Checked here, never
+//                  sent to the page. Without it, admin changes are refused.
 //   PORT           set by Railway
 
 const http = require('http');
@@ -15,6 +17,7 @@ const { Pool } = require('pg');
 const PORT = Number(process.env.PORT) || 8080;
 const APP_PASSWORD = process.env.APP_PASSWORD || '';
 const DATABASE_URL = process.env.DATABASE_URL || '';
+const ADMIN_PIN = (process.env.ADMIN_PIN || '').trim();
 const MAX_BODY = 1024 * 1024;
 const SESSION_KEY = /^[A-Za-z0-9-]{1,64}_\d{4}-\d{2}-\d{2}$/;
 const DOC_NAMES = new Set(['classes', 'students']);
@@ -107,6 +110,31 @@ function checkAuth(req, res) {
   res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Balshaala HTS Attendance", charset="UTF-8"', 'Content-Type': 'text/plain' });
   res.end('Password required. Any username works; the password is the one shared with teachers.');
   return false;
+}
+
+// Admin PIN: same lockout rule as the password, counted separately.
+const pinFailures = new Map();
+
+// Returns null when allowed, otherwise [status, message].
+function checkAdminPin(req, pin) {
+  if (!ADMIN_PIN) return [503, 'ADMIN_PIN is not set on the server'];
+  const ip = clientIp(req);
+  const f = pinFailures.get(ip);
+  if (f && Date.now() - f.since < FAIL_WINDOW_MS && f.count >= FAIL_LIMIT) return [429, 'Too many wrong PINs. Try again in 15 minutes.'];
+  if (typeof pin === 'string' && pin && sameSecret(pin.trim(), ADMIN_PIN)) {
+    pinFailures.delete(ip);
+    return null;
+  }
+  const entry = f && Date.now() - f.since < FAIL_WINDOW_MS ? f : { count: 0, since: Date.now() };
+  entry.count++;
+  pinFailures.set(ip, entry);
+  return [403, 'Incorrect admin PIN'];
+}
+
+function requireAdmin(req, res) {
+  const denied = checkAdminPin(req, req.headers['x-admin-pin']);
+  if (denied) { sendJson(res, denied[0], { error: denied[1] }); return false; }
+  return true;
 }
 
 // ---------- helpers ----------
@@ -204,11 +232,17 @@ async function handleApi(req, res, url) {
   if (req.method === 'GET' && url.pathname === '/api/state') {
     return sendJson(res, 200, await getState());
   }
+  if (req.method === 'POST' && url.pathname === '/api/admin/check') {
+    const body = await readJson(req);
+    const denied = checkAdminPin(req, body.pin);
+    return denied ? sendJson(res, denied[0], { error: denied[1] }) : sendJson(res, 200, { ok: true });
+  }
   if (req.method === 'PATCH' && parts[1] === 'sessions' && parts.length === 3) {
     await patchSession(decodeURIComponent(parts[2]), await readJson(req));
     return sendJson(res, 200, { ok: true });
   }
   if (req.method === 'DELETE' && url.pathname === '/api/sessions') {
+    if (!requireAdmin(req, res)) return;
     const classId = url.searchParams.get('classId');
     if (classId) await pool.query('DELETE FROM sessions WHERE class_id = $1', [classId]);
     else if (url.searchParams.get('all') === 'true') await pool.query('DELETE FROM sessions');
@@ -216,6 +250,7 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, { ok: true });
   }
   if (req.method === 'PUT' && parts[1] === 'docs' && parts.length === 3) {
+    if (!requireAdmin(req, res)) return;
     const version = await putDoc(parts[2], await readJson(req));
     if (version === null) return sendJson(res, 409, { error: 'Someone else changed this. Reload and try again.' });
     return sendJson(res, 200, { ok: true, version });
@@ -247,6 +282,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (!APP_PASSWORD) console.warn('APP_PASSWORD is not set: every request will get 503 until it is.');
+if (!ADMIN_PIN) console.warn('ADMIN_PIN is not set: the Admin area is locked for everyone until it is.');
 if (pool) initDbWithRetry();
 else console.warn('DATABASE_URL is not set: the page will fall back to device-only storage.');
 
